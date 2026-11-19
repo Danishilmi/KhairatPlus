@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { usePortal } from '../../components/Portal.jsx';
-import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Search, Badge } from '../../components/ui.jsx';
+import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Search, Badge, PasswordInput } from '../../components/ui.jsx';
 import { MemberProfile, DependentsTable, PaymentsTable, MonthGrid } from '../../components/MemberDetail.jsx';
 import { useT, useErrorText, useLabel, STATUS } from '../../lib/i18n.jsx';
 import { q } from '../../lib/supabase.js';
@@ -113,7 +113,7 @@ function MemberForm({ member, amils, onClose, onSaved }) {
   const { client } = usePortal();
   const toast = useToast();
   const isNew = !member.id;
-  const { values, bind } = useForm({ full_name: '', ic_no: '', phone: '', address: '', map_url: '', amil_id: '', status: 'active', join_date: new Date().toISOString().slice(0, 10), password: '', ...member, amil_id: member.amil_id || '', password: '' });
+  const { values, bind } = useForm({ full_name: '', ic_no: '', phone: '', email: '', address: '', map_url: '', amil_id: '', status: 'active', join_date: new Date().toISOString().slice(0, 10), password: '', ...member, email: member.email || '', amil_id: member.amil_id || '', password: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [created, setCreated] = useState(null);
@@ -123,13 +123,14 @@ function MemberForm({ member, amils, onClose, onSaved }) {
     try {
       const fields = { full_name: values.full_name.trim(), ic_no: values.ic_no, phone: values.phone, address: values.address, map_url: values.map_url, amil_id: values.amil_id || null, join_date: values.join_date };
       if (isNew) {
-        const res = await adminFn(client, { action: 'create_member', password: values.password, member: fields });
+        const res = await adminFn(client, { action: 'create_member', password: values.password, member: { ...fields, email: values.email.trim().toLowerCase() } });
         setCreated({ ...res.member, password: values.password });
       } else {
         const upd = { ...fields };
         if (member.status !== 'deceased') upd.status = values.status;
         await q(client.from('members').update(upd).eq('id', member.id));
         if (member.user_id) await q(client.from('profiles').update({ full_name: fields.full_name }).eq('id', member.user_id));
+        if (values.email.trim().toLowerCase() !== (member.email || '')) await adminFn(client, { action: 'set_email', role: 'ahli', id: member.id, email: values.email.trim().toLowerCase() });
         if (values.password) await adminFn(client, { action: 'set_password', role: 'ahli', id: member.id, password: values.password });
         toast(t('Maklumat ahli disimpan.', 'Member saved.'));
         onSaved();
@@ -144,6 +145,7 @@ function MemberForm({ member, amils, onClose, onSaved }) {
         <p>{t('Berikan maklumat log masuk ini kepada ahli:', 'Give these login details to the member:')}</p>
         <dl className="dl card" style={{ boxShadow: 'none' }}>
           <dt>{t('ID Ahli', 'Member ID')}</dt><dd><strong style={{ fontSize: '1.2rem' }}>{created.member_no}</strong></dd>
+          {created.email && <><dt>{t('Atau e-mel', 'Or email')}</dt><dd>{created.email}</dd></>}
           <dt>{t('Kata laluan', 'Password')}</dt><dd><code>{created.password}</code></dd>
           <dt>Portal</dt><dd>{window.location.origin}/ahli</dd>
         </dl>
@@ -162,6 +164,7 @@ function MemberForm({ member, amils, onClose, onSaved }) {
           <Field label={t('Nama penuh', 'Full name')} wide><input {...bind('full_name')} required /></Field>
           <Field label={t('No. KP', 'IC no.')}><input {...bind('ic_no')} placeholder="800212-03-5233" /></Field>
           <Field label={t('Telefon', 'Phone')}><input {...bind('phone')} type="tel" /></Field>
+          <Field label={t('E-mel log masuk (pilihan)', 'Login email (optional)')} hint={t('Ahli boleh log masuk dengan e-mel ini atau ID Ahli', 'The member can log in with this email or the Member ID')} wide><input {...bind('email')} type="email" /></Field>
           <Field label={t('Lokasi rumah (alamat)', 'House location (address)')} wide><textarea {...bind('address')} placeholder="Lot 12, Lorong Masjid, Kg Wakaf Mek Zainab" /></Field>
           <Field label={t('Pautan peta (pilihan)', 'Map link (optional)')} hint={t('Google Maps atau Waze', 'Google Maps or Waze')} wide><input {...bind('map_url')} type="url" placeholder="https://maps.google.com/…" /></Field>
           <Field label={t('Amil yang menjaga', 'Assigned amil')}>
@@ -179,7 +182,7 @@ function MemberForm({ member, amils, onClose, onSaved }) {
             </Field>
           )}
           <Field label={isNew ? t('Kata laluan awal', 'Initial password') : t('Kata laluan baharu (kosongkan jika tiada perubahan)', 'New password (leave blank to keep)')}>
-            <input {...bind('password')} type="text" minLength={6} required={isNew} autoComplete="new-password" />
+            <PasswordInput {...bind('password')} minLength={6} required={isNew} autoComplete="new-password" showLabel={t('Tunjuk kata laluan', 'Show password')} hideLabel={t('Sembunyi kata laluan', 'Hide password')} />
           </Field>
         </div>
       </form>

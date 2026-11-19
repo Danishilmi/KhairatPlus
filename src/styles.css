@@ -175,3 +175,14 @@ button.mcell:hover { outline: 2px solid var(--accent); }
   .brand small { display: none; }
   th, td { padding: 9px 10px; }
 }
+
+.pw-wrap { position: relative; }
+.pw-wrap input { padding-right: 44px; }
+.pw-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--muted); padding: 6px 8px; border-radius: 6px; cursor: pointer; display: flex; }
+.pw-eye:hover { color: var(--accent); background: var(--surface-2); }
+.divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; margin: 16px 0; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.btn-passkey { gap: 8px; }
+.passkey-list { list-style: none; padding: 0; margin: 0 0 12px; }
+.passkey-list li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.passkey-list li:last-child { border-bottom: 0; }
