@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Routes, Route, Navigate, Link } from 'react-router-dom';
 import QRCode from 'qrcode';
-import { Portal, usePortal, ChangePassword } from '../../components/Portal.jsx';
+import { Portal, usePortal, AccountSecurity } from '../../components/Portal.jsx';
 import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Badge } from '../../components/ui.jsx';
 import { MemberProfile, DependentsTable, PaymentsTable, MonthGrid, initials } from '../../components/MemberDetail.jsx';
 import { useT, useErrorText, useLabel, useMonths, RELATIONSHIPS } from '../../lib/i18n.jsx';
@@ -17,7 +17,7 @@ export default function AhliPortal() {
     { to: '/ahli/amil', label: t('Amil saya', 'My amil') }
   ];
   return (
-    <Portal role="ahli" accent="ahli" title={t('Portal Ahli', 'Member Portal')} loginLabel={t('ID Ahli', 'Member ID')} loginHint={t('Contoh: KWMZ-0001', 'Example: KWMZ-0001')} tabs={tabs}>
+    <Portal role="ahli" accent="ahli" title={t('Portal Ahli', 'Member Portal')} loginLabel={t('E-mel atau ID Ahli', 'Email or Member ID')} loginHint={t('Contoh: ali@gmail.com atau KWMZ-0001', 'Example: ali@gmail.com or KWMZ-0001')} tabs={tabs}>
       <MemberData>
         {(ctx) => (
           <Routes>
@@ -70,7 +70,7 @@ function Profile({ member, payments, dependents, amil, reload }) {
           <p className="small muted">{t('Tanggungan berdaftar', 'Registered dependents')}: <strong>{dependents.length}</strong></p>
         </div>
       </div>
-      <ChangePassword />
+      <AccountSecurity />
       {editing && <ProfileForm member={member} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); reload(); }} />}
     </>
   );

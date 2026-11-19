@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Portal, ChangePassword } from '../../components/Portal.jsx';
+import { Portal, AccountSecurity } from '../../components/Portal.jsx';
 import { useT } from '../../lib/i18n.jsx';
 import Dashboard from './Dashboard.jsx';
 import Amils from './Amils.jsx';
@@ -27,7 +27,7 @@ export default function AdminPortal() {
         <Route path="amil" element={<Amils />} />
         <Route path="khairat" element={<Payouts />} />
         <Route path="kewangan" element={<Finance />} />
-        <Route path="tetapan" element={<><Settings /><ChangePassword /></>} />
+        <Route path="tetapan" element={<><Settings /><AccountSecurity /></>} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>
     </Portal>

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Portal, usePortal, ChangePassword } from '../../components/Portal.jsx';
+import { Portal, usePortal, AccountSecurity } from '../../components/Portal.jsx';
 import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Search, Badge, Stat } from '../../components/ui.jsx';
 import { MemberProfile, DependentsTable, PaymentsTable, MonthGrid, Legend } from '../../components/MemberDetail.jsx';
 import { useT, useErrorText, useLabel, useMonths, METHODS } from '../../lib/i18n.jsx';
@@ -15,7 +15,7 @@ export default function AmilPortal() {
     { to: '/amil/akaun', label: t('Akaun', 'Account') }
   ];
   return (
-    <Portal role="amil" accent="amil" title={t('Portal Amil', 'Collector Portal')} loginLabel={t('Nama pengguna', 'Username')} tabs={tabs}>
+    <Portal role="amil" accent="amil" title={t('Portal Amil', 'Collector Portal')} loginLabel={t('E-mel atau nama pengguna', 'Email or username')} tabs={tabs}>
       <AmilData>
         {(ctx) => (
           <Routes>
@@ -228,13 +228,14 @@ function Account({ amil, members }) {
         <dl className="dl">
           <dt>{t('Nama', 'Name')}</dt><dd>{amil.full_name}</dd>
           <dt>{t('Nama pengguna', 'Username')}</dt><dd><code>{amil.username}</code></dd>
+          <dt>{t('E-mel', 'Email')}</dt><dd>{amil.email || '-'}</dd>
           <dt>{t('Telefon', 'Phone')}</dt><dd>{amil.phone || '-'}</dd>
           <dt>{t('Kawasan jagaan', 'Area covered')}</dt><dd>{amil.area || '-'}</dd>
           <dt>{t('Bilangan ahli', 'Members')}</dt><dd>{members.length}</dd>
         </dl>
         <p className="small muted">{t('Untuk menukar maklumat profil, hubungi pentadbir.', 'To change your profile details, contact the admin.')}</p>
       </div>
-      <ChangePassword />
+      <AccountSecurity />
     </>
   );
 }

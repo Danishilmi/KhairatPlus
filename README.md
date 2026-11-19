@@ -7,12 +7,20 @@ A bereavement fund app with three portals, each with its own login:
 | Portal | URL | Log masuk dengan | Boleh buat |
 |---|---|---|---|
 | **Pentadbir (Admin)** | `/admin` | E-mel | Tambah amil, daftar & pantau ahli, lihat profil ahli dan tanggungan, rekod kematian & bayaran khairat kepada waris, kedudukan kewangan, tetapan yuran/QR |
-| **Ahli (Member)** | `/ahli` | ID Ahli, cth. `KWMZ-0001` | Kemas kini profil & tanggungan, bayar yuran melalui kod QR, lihat profil amil |
-| **Amil (Collector)** | `/amil` | Nama pengguna | Lihat ahli di bawah jagaan, rekod/ubah bayaran bulanan, sahkan bayaran QR |
+| **Ahli (Member)** | `/ahli` | E-mel atau ID Ahli, cth. `KWMZ-0001` | Kemas kini profil & tanggungan, bayar yuran melalui kod QR, lihat profil amil |
+| **Amil (Collector)** | `/amil` | E-mel atau nama pengguna | Lihat ahli di bawah jagaan, rekod/ubah bayaran bulanan, sahkan bayaran QR |
 
 The interface is in Bahasa Melayu with a one-tap English toggle (BM / EN).
 
+### Logging in
+
+- **Email + password** in every portal. Ahli can also type their Member ID and amil their username instead of the email. The eye icon shows or hides the password.
+- **Fingerprint / Face ID** (passkeys): after logging in once with a password, open the account page (*Profil saya* for ahli, *Akaun* for amil, *Tetapan* for admin) and tap *Daftar cap jari peranti ini*. From then on, *Log masuk dengan cap jari / Face ID* on the login page signs in with the phone's or laptop's fingerprint, face or screen lock. Each device is set up once, and passkeys can be removed from the same page.
+- Each portal checks the role: an ahli account (or its fingerprint) cannot open the admin or amil portal.
+
 ![Landing](docs/screenshots/landing.png)
+
+<img src="docs/screenshots/login.png" alt="Login with email, eye icon and fingerprint" width="420" />
 
 | Admin | Ahli | Amil |
 |---|---|---|
@@ -38,15 +46,16 @@ Only **paid** (verified) payments count toward the fund balance. Balance = all c
 ### 1. Supabase
 
 1. Create a project at [supabase.com](https://supabase.com) (free tier is fine).
-2. **SQL Editor → New query**: paste the whole of [`supabase/migrations/20261119000000_khairatplus_schema.sql`](supabase/migrations/20261119000000_khairatplus_schema.sql) and **Run**. This creates the tables, security rules and functions.
+2. **SQL Editor → New query**: run each file in [`supabase/migrations/`](supabase/migrations/) in order (paste the whole file and **Run**): first `20261119000000_khairatplus_schema.sql` (tables, security rules, functions), then `20261119010000_member_email.sql` (member login emails). If you already ran the first file, just run the second.
 3. **Authentication → Sign In / Providers → Email**: turn **off** "Confirm email" (amil and ahli use internal addresses like `kwmz-0001@khairatplus.local`, which cannot receive mail). Also turn **off** "Allow new users to sign up" so only the admin can create accounts.
-4. **Edge Functions → Deploy a new function → Via editor**: name it exactly `admin-users`, paste [`supabase/functions/admin-users/index.ts`](supabase/functions/admin-users/index.ts), and deploy.
-   (Or with the CLI: `npx supabase login`, `npx supabase link --project-ref <ref>`, `npx supabase functions deploy admin-users`.)
-5. Create the first admin: **Authentication → Users → Add user → Create new user** with your email and a password (tick *Auto Confirm User*). Then in the SQL Editor run:
+4. **Passkeys (fingerprint login)**: in **Authentication**, open the **Passkeys** settings and enable them. Set the relying party ID to your site's domain without `https://` (for example `khairatplus.vercel.app`, or your own domain) and the allowed origin to the full URL (for example `https://khairatplus.vercel.app`). Passkeys are tied to that domain, so set this to the domain people will actually use; fingerprints set up on another domain won't work there.
+5. **Edge Functions → Deploy a new function → Via editor**: name it exactly `admin-users`, paste [`supabase/functions/admin-users/index.ts`](supabase/functions/admin-users/index.ts), and deploy.
+   (Or with the CLI: `npx supabase login`, `npx supabase link --project-ref <ref>`, `npx supabase functions deploy admin-users`.) It also handles logging in with a Member ID or username. If you deployed it before, deploy it again to get this.
+6. Create the first admin: **Authentication → Users → Add user → Create new user** with your email and a password (tick *Auto Confirm User*). Then in the SQL Editor run:
    ```sql
    select public.bootstrap_admin('your-email@example.com');
    ```
-6. **Project Settings → API**: copy the **Project URL** and the **anon public** key. Never put the `service_role` key in the web app or in Vercel.
+7. **Project Settings → API**: copy the **Project URL** and the **anon public** key. Never put the `service_role` key in the web app or in Vercel.
 
 ### 2. Run locally
 
@@ -74,12 +83,12 @@ Logins: `admin@khairatplus.local` / `admin123`, amil `amil1` or `amil2` / `amil1
 
 ## Day-to-day use
 
-- **Admin → Amil → Tambah amil**: name, phone, area, a username and password. Give the amil their username and password.
-- **Admin → Ahli → Daftar ahli**: the Member ID (`KWMZ-0001`, `KWMZ-0002`, …) is generated automatically. Choose the amil who looks after them and set an initial password; the app shows the login details to hand to the member.
+- **Admin → Amil → Tambah amil**: name, phone, area, a username, an optional login email, and a password. The amil can log in with the email or the username.
+- **Admin → Ahli → Daftar ahli**: the Member ID (`KWMZ-0001`, `KWMZ-0002`, …) is generated automatically. Choose the amil who looks after them, optionally add their email, and set an initial password; the app shows the login details to hand to the member.
 - **Admin → Bayaran khairat → Rekod kematian & bayaran**: choose the member, then who passed away (the member or one of their dependents). The next of kin is pre-filled (spouse for a member, the member for a dependent) and the default payout amount comes from *Tetapan*. This marks the person as deceased and records the payout.
 - **Admin → Kewangan**: fund balance, monthly collections vs payouts, collections per amil, and members in arrears.
 - **Admin → Tetapan**: monthly fee, default payout, bank details, and the official DuitNow QR image.
-- Everyone can change their own password; the admin can reset amil and ahli passwords from the edit form.
+- Everyone can change their own password and set up fingerprint login; the admin can reset amil and ahli passwords and change their login email from the edit form.
 
 ## Security model
 
