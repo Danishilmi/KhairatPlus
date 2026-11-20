@@ -56,7 +56,7 @@ export function useErrorText() {
       [/email_taken|already been registered/i, t('E-mel ini sudah digunakan oleh akaun lain.', 'That email is already used by another account.')],
       [/invalid_email|Unable to validate email/i, t('Alamat e-mel tidak sah.', 'Invalid email address.')],
       [/NotAllowedError|ERROR_CEREMONY_ABORTED|cancel|timed out/i, t('Pengesahan cap jari dibatalkan atau tamat masa.', 'Fingerprint check was cancelled or timed out.')],
-      [/passkey_disabled|Passkeys are disabled/i, t('Log masuk cap jari belum diaktifkan oleh pentadbir.', 'Fingerprint login has not been enabled by the admin.')],
+      [/passkey_disabled|Passkeys are disabled/i, t('Log masuk cap jari / Face ID belum diaktifkan.', 'Fingerprint / Face ID login is not turned on yet.')],
       [/webauthn_challenge_expired/i, t('Masa tamat. Sila cuba lagi.', 'Timed out. Please try again.')],
       [/passkey_not_found|credential.*not found|webauthn_credential/i, t('Cap jari ini belum didaftarkan untuk mana-mana akaun.', 'This fingerprint is not registered to any account.')],
       [/username_taken|already/i, t('Nama pengguna sudah digunakan.', 'That username is already taken.')],
