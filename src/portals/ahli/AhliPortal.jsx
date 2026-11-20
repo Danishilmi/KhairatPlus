@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate, Link } from 'react-router-dom';
 import QRCode from 'qrcode';
-import { dobFromIc } from '../../lib/icDate.js';
+import { useDobFromIc } from '../../lib/icDate.js';
 import { Portal, usePortal, AccountSecurity } from '../../components/Portal.jsx';
 import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Badge } from '../../components/ui.jsx';
 import { MemberProfile, DependentsTable, PaymentsTable, MonthGrid, initials } from '../../components/MemberDetail.jsx';
@@ -82,13 +82,15 @@ function ProfileForm({ member, onClose, onSaved }) {
   const errText = useErrorText();
   const { client, session } = usePortal();
   const toast = useToast();
-  const { values, bind } = useForm(member);
+  const { values, bind, setValues } = useForm(member);
+  useDobFromIc(values.ic_no, setValues);
   const [err, setErr] = useState('');
   async function submit(e) {
     e.preventDefault(); setErr('');
     try {
       await q(client.from('members').update({ full_name: values.full_name.trim(), ic_no: values.ic_no, phone: values.phone, address: values.address, map_url: values.map_url }).eq('id', member.id));
       await q(client.from('profiles').update({ full_name: values.full_name.trim() }).eq('id', session.user.id)).catch(() => {});
+      await q(client.from('members').update({ dob: values.dob || null }).eq('id', member.id));
       toast(t('Profil dikemas kini.', 'Profile updated.')); onSaved();
     } catch (e2) { setErr(errText(e2)); }
   }
@@ -100,6 +102,7 @@ function ProfileForm({ member, onClose, onSaved }) {
           <Field label={t('Nama penuh', 'Full name')} wide><input {...bind('full_name')} required /></Field>
           <Field label={t('No. KP', 'IC no.')}><input {...bind('ic_no')} /></Field>
           <Field label={t('Telefon', 'Phone')}><input type="tel" {...bind('phone')} /></Field>
+          <Field label={t('Tarikh lahir', 'Date of birth')} hint={t('Diisi automatik daripada No. KP', 'Filled in from the IC no.')}><input type="date" {...bind('dob')} /></Field>
           <Field label={t('Lokasi rumah (alamat)', 'House location (address)')} wide><textarea {...bind('address')} /></Field>
           <Field label={t('Pautan peta (pilihan)', 'Map link (optional)')} wide hint={t('Kongsi lokasi dari Google Maps / Waze', 'Share your location from Google Maps / Waze')}><input type="url" {...bind('map_url')} /></Field>
         </div>
@@ -138,15 +141,7 @@ function DependentForm({ memberId, dep, onClose, onSaved }) {
   const isNew = !dep.id;
   const { values, bind, setValues } = useForm({ full_name: '', ic_no: '', relationship: 'child', dob: '', phone: '', ...dep });
   const [err, setErr] = useState('');
-  // Fill the birth date from the IC whenever a complete, valid IC is typed. Opening a saved dependent
-  // does not overwrite a date already there, and the date can still be changed by hand.
-  const lastIc = useRef(values.ic_no);
-  useEffect(() => {
-    if (values.ic_no === lastIc.current) return;
-    lastIc.current = values.ic_no;
-    const dob = dobFromIc(values.ic_no);
-    if (dob) setValues((v) => ({ ...v, dob }));
-  }, [values.ic_no]);
+  useDobFromIc(values.ic_no, setValues);
   async function submit(e) {
     e.preventDefault(); setErr('');
     const row = { full_name: values.full_name.trim(), ic_no: values.ic_no, relationship: values.relationship, dob: values.dob || null, phone: values.phone };

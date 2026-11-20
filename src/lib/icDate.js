@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 // Birth date from a Malaysian IC (No. KP): digits 1-2 are the year, 3-4 the month, 5-6 the day.
 // Works whether or not the IC has dashes. Returns 'YYYY-MM-DD', or '' when the IC is incomplete
 // or the date is not real (e.g. 31 February) or in the future.
@@ -12,4 +14,16 @@ export function dobFromIc(ic, today = new Date()) {
   const iso = `${year}-${d.slice(2, 4)}-${d.slice(4, 6)}`;
   const now = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   return iso > now ? '' : iso;
+}
+
+// In a form: whenever a complete, valid IC is typed, set the birth date field from it.
+// Opening a saved record does not overwrite its date, and the date can still be changed by hand.
+export function useDobFromIc(ic, setValues, field = 'dob') {
+  const last = useRef(ic);
+  useEffect(() => {
+    if (ic === last.current) return;
+    last.current = ic;
+    const dob = dobFromIc(ic);
+    if (dob) setValues((v) => ({ ...v, [field]: dob }));
+  }, [ic]);
 }

@@ -7,6 +7,7 @@ import { q } from '../../lib/supabase.js';
 import { adminFn } from '../../lib/adminFn.js';
 import { rm, fmtDate, thisYear, arrearsFor } from '../../lib/format.js';
 import { loadAll, sum } from './data.js';
+import { useDobFromIc } from '../../lib/icDate.js';
 
 export default function Members() {
   const t = useT();
@@ -113,10 +114,11 @@ function MemberForm({ member, amils, onClose, onSaved }) {
   const { client } = usePortal();
   const toast = useToast();
   const isNew = !member.id;
-  const { values, bind } = useForm({ full_name: '', ic_no: '', phone: '', email: '', address: '', map_url: '', amil_id: '', status: 'active', join_date: new Date().toISOString().slice(0, 10), password: '', ...member, email: member.email || '', amil_id: member.amil_id || '', password: '' });
+  const { values, bind, setValues } = useForm({ full_name: '', ic_no: '', phone: '', email: '', address: '', map_url: '', amil_id: '', status: 'active', join_date: new Date().toISOString().slice(0, 10), password: '', ...member, email: member.email || '', amil_id: member.amil_id || '', password: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [created, setCreated] = useState(null);
+  useDobFromIc(values.ic_no, setValues);
 
   async function submit(e) {
     e.preventDefault(); setBusy(true); setErr('');
@@ -124,9 +126,10 @@ function MemberForm({ member, amils, onClose, onSaved }) {
       const fields = { full_name: values.full_name.trim(), ic_no: values.ic_no, phone: values.phone, address: values.address, map_url: values.map_url, amil_id: values.amil_id || null, join_date: values.join_date };
       if (isNew) {
         const res = await adminFn(client, { action: 'create_member', password: values.password, member: { ...fields, email: values.email.trim().toLowerCase() } });
+        if (values.dob) await q(client.from('members').update({ dob: values.dob }).eq('id', res.member.id));
         setCreated({ ...res.member, password: values.password });
       } else {
-        const upd = { ...fields };
+        const upd = { ...fields, dob: values.dob || null };
         if (member.status !== 'deceased') upd.status = values.status;
         await q(client.from('members').update(upd).eq('id', member.id));
         if (member.user_id) await q(client.from('profiles').update({ full_name: fields.full_name }).eq('id', member.user_id));
@@ -164,6 +167,7 @@ function MemberForm({ member, amils, onClose, onSaved }) {
           <Field label={t('Nama penuh', 'Full name')} wide><input {...bind('full_name')} required /></Field>
           <Field label={t('No. KP', 'IC no.')}><input {...bind('ic_no')} placeholder="800212-03-5233" /></Field>
           <Field label={t('Telefon', 'Phone')}><input {...bind('phone')} type="tel" /></Field>
+          <Field label={t('Tarikh lahir', 'Date of birth')} hint={t('Diisi automatik daripada No. KP', 'Filled in from the IC no.')}><input type="date" {...bind('dob')} /></Field>
           <Field label={t('E-mel log masuk (pilihan)', 'Login email (optional)')} hint={t('Ahli boleh log masuk dengan e-mel ini atau ID Ahli', 'The member can log in with this email or the Member ID')} wide><input {...bind('email')} type="email" /></Field>
           <Field label={t('Lokasi rumah (alamat)', 'House location (address)')} wide><textarea {...bind('address')} placeholder="Lot 12, Lorong Masjid, Kg Wakaf Mek Zainab" /></Field>
           <Field label={t('Pautan peta (pilihan)', 'Map link (optional)')} hint={t('Google Maps atau Waze', 'Google Maps or Waze')} wide><input {...bind('map_url')} type="url" placeholder="https://maps.google.com/…" /></Field>

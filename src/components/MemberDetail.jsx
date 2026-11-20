@@ -121,6 +121,7 @@ export function MemberProfile({ member, amilName }) {
         <dt>{t('ID Ahli', 'Member ID')}</dt><dd>{member.member_no}</dd>
         <dt>{t('No. KP', 'IC no.')}</dt><dd>{member.ic_no || '-'}</dd>
         <dt>{t('Telefon', 'Phone')}</dt><dd>{member.phone ? <a href={'tel:' + member.phone}>{member.phone}</a> : '-'}</dd>
+        <dt>{t('Tarikh lahir', 'Date of birth')}</dt><dd>{fmtDate(member.dob)}</dd>
         {member.email && <><dt>{t('E-mel', 'Email')}</dt><dd>{member.email}</dd></>}
         <dt>{t('Lokasi rumah', 'House location')}</dt>
         <dd>{member.address || '-'}{member.map_url && <> · <a href={member.map_url} target="_blank" rel="noreferrer">{t('Buka peta', 'Open map')}</a></>}</dd>
