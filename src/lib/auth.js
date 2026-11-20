@@ -1,3 +1,4 @@
+// One login page for everyone; the account's role (profiles.role) decides the portal.
 // Everyone can log in with an email. Ahli can also use their Member ID (e.g. KWMZ-0001)
 // and amil their username: the admin-users Edge Function looks up that account's email,
 // signs in on the server and returns the session, so emails are never exposed.
@@ -23,3 +24,7 @@ export async function signIn(client, identifier, password) {
 
 // Passkeys (fingerprint / Face ID / Windows Hello) need WebAuthn and a secure context.
 export const passkeySupported = () => typeof window !== 'undefined' && !!window.PublicKeyCredential && window.isSecureContext;
+
+// Where each role lands after logging in.
+export const ROLES = ['admin', 'amil', 'ahli'];
+export const roleHome = (role) => (ROLES.includes(role) ? '/' + role : '/');

@@ -4,15 +4,13 @@ export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const configured = Boolean(SUPABASE_URL && KEY);
 
-// One client per portal, each with its own session storage key, so an admin
-// and an amil can be signed in on the same browser without clashing.
-const clients = {};
-export function getClient(portal) {
+// One shared client: everyone logs in on the same page and the app sends them
+// to the portal that matches their account's role.
+let client = null;
+export function getClient() {
   if (!configured) return null;
-  if (!clients[portal]) {
-    clients[portal] = createClient(SUPABASE_URL, KEY, { auth: { storageKey: `khairatplus-${portal}`, persistSession: true } });
-  }
-  return clients[portal];
+  if (!client) client = createClient(SUPABASE_URL, KEY, { auth: { storageKey: 'khairatplus-auth', persistSession: true } });
+  return client;
 }
 
 // Throws on a Supabase error so callers can use try/catch.

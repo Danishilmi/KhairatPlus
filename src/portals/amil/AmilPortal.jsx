@@ -15,7 +15,7 @@ export default function AmilPortal() {
     { to: '/amil/akaun', label: t('Akaun', 'Account') }
   ];
   return (
-    <Portal role="amil" accent="amil" title={t('Portal Amil', 'Collector Portal')} loginLabel={t('E-mel atau nama pengguna', 'Email or username')} tabs={tabs}>
+    <Portal role="amil" accent="amil" title={t('Portal Amil', 'Collector Portal')} tabs={tabs}>
       <AmilData>
         {(ctx) => (
           <Routes>

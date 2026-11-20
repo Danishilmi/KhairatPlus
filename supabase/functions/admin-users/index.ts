@@ -1,5 +1,5 @@
-// Edge Function: lets the KhairatPlus admin create login accounts for amil and
-// ahli, and reset their passwords. Needs the service role key, which Supabase
+// Edge Function: lets the KhairatPlus admin create login accounts for amil, ahli
+// and other admins, and reset their passwords. Needs the service role key, which Supabase
 // injects automatically as SUPABASE_SERVICE_ROLE_KEY — never put it in the web app.
 import { createClient } from 'npm:@supabase/supabase-js@2.119.2';
 
@@ -61,6 +61,12 @@ Deno.serve(async (req) => {
 
   if (body.action === 'set_password') {
     if (password.length < 6) return json({ error: 'password_too_short' }, 400);
+    if (body.role === 'admin') {
+      const { data: p } = await service.from('profiles').select('id').eq('id', body.id).eq('role', 'admin').maybeSingle();
+      if (!p) return json({ error: 'not_found' }, 404);
+      const { error } = await service.auth.admin.updateUserById(p.id, { password });
+      return error ? json({ error: error.message }, 400) : json({ ok: true });
+    }
     const table = body.role === 'amil' ? 'amils' : 'members';
     const { data: row } = await service.from(table).select('user_id').eq('id', body.id).maybeSingle();
     if (!row?.user_id) return json({ error: 'not_found' }, 404);
@@ -131,6 +137,32 @@ Deno.serve(async (req) => {
     if (error) return json({ error: error.message }, 400);
     if (amil.user_id) await service.auth.admin.deleteUser(amil.user_id); // also removes the profile
     return json({ ok: true });
+  }
+
+  // Add another admin. Admins always log in with their email.
+  if (body.action === 'create_admin') {
+    const a = body.admin || {};
+    const full_name = String(a.full_name || '').trim();
+    const email = cleanEmail(a.email);
+    if (!full_name || !email) return json({ error: 'missing_fields' }, 400);
+    if (!validEmail(email)) return json({ error: 'invalid_email' }, 400);
+    if (password.length < 6) return json({ error: 'password_too_short' }, 400);
+    const { data: created, error } = await service.auth.admin.createUser({ email, password, email_confirm: true });
+    if (error) return json({ error: /already|exists|registered/i.test(error.message) ? 'email_taken' : error.message }, 400);
+    const { data: admin, error: e2 } = await service.from('profiles')
+      .insert({ id: created.user.id, role: 'admin', full_name, username: email }).select().single();
+    if (e2) { await service.auth.admin.deleteUser(created.user.id); return json({ error: e2.message }, 400); }
+    return json({ admin });
+  }
+
+  if (body.action === 'delete_admin') {
+    if (body.id === caller.user.id) return json({ error: 'cannot_delete_self' }, 400);
+    const { data: p } = await service.from('profiles').select('id').eq('id', body.id).eq('role', 'admin').maybeSingle();
+    if (!p) return json({ error: 'not_found' }, 404);
+    const { count } = await service.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'admin');
+    if ((count || 0) <= 1) return json({ error: 'last_admin' }, 409);
+    const { error } = await service.auth.admin.deleteUser(p.id); // also removes the profile
+    return error ? json({ error: error.message }, 400) : json({ ok: true });
   }
 
   return json({ error: 'unknown_action' }, 400);
