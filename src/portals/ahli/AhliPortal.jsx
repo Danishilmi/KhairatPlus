@@ -17,7 +17,7 @@ export default function AhliPortal() {
     { to: '/ahli/amil', label: t('Amil saya', 'My amil') }
   ];
   return (
-    <Portal role="ahli" accent="ahli" title={t('Portal Ahli', 'Member Portal')} loginLabel={t('E-mel atau ID Ahli', 'Email or Member ID')} loginHint={t('Contoh: ali@gmail.com atau KWMZ-0001', 'Example: ali@gmail.com or KWMZ-0001')} tabs={tabs}>
+    <Portal role="ahli" accent="ahli" title={t('Portal Ahli', 'Member Portal')} tabs={tabs}>
       <MemberData>
         {(ctx) => (
           <Routes>

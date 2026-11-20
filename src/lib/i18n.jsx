@@ -50,7 +50,9 @@ export function useErrorText() {
     const msg = String(err?.message || err || '');
     const map = [
       [/Invalid login credentials|invalid_login/i, t('ID atau kata laluan salah.', 'Wrong ID or password.')],
-      [/wrong_role/, t('Akaun ini bukan untuk portal ini.', 'This account does not belong to this portal.')],
+      [/no_role/, t('Akaun ini belum diberi peranan. Hubungi pentadbir.', 'This account has no role yet. Please contact the admin.')],
+      [/cannot_delete_self/, t('Anda tidak boleh memadam akaun anda sendiri.', 'You cannot delete your own account.')],
+      [/last_admin/, t('Mesti ada sekurang-kurangnya seorang pentadbir.', 'There must be at least one admin.')],
       [/email_taken|already been registered/i, t('E-mel ini sudah digunakan oleh akaun lain.', 'That email is already used by another account.')],
       [/invalid_email|Unable to validate email/i, t('Alamat e-mel tidak sah.', 'Invalid email address.')],
       [/NotAllowedError|ERROR_CEREMONY_ABORTED|cancel|timed out/i, t('Pengesahan cap jari dibatalkan atau tamat masa.', 'Fingerprint check was cancelled or timed out.')],

@@ -2,7 +2,7 @@
 
 Sistem rekod **khairat kematian** untuk penduduk **Kampung Wakaf Mek Zainab**: senarai ahli dan tanggungan, kutipan yuran bulanan oleh amil, bayaran QR, dan bayaran khairat kepada waris.
 
-A bereavement fund app with three portals, each with its own login:
+A bereavement fund app with three portals and **one login page** at the root URL. Users type their email, Member ID or username; the app reads the account's role and opens the right portal, so nobody has to pick a role:
 
 | Portal | URL | Log masuk dengan | Boleh buat |
 |---|---|---|---|
@@ -14,11 +14,12 @@ The interface is in Bahasa Melayu with a one-tap English toggle (BM / EN).
 
 ### Logging in
 
-- **Email + password** in every portal. Ahli can also type their Member ID and amil their username instead of the email. The eye icon shows or hides the password.
+- **Email + password** on the single login page. Ahli can also type their Member ID and amil their username instead of the email. The eye icon shows or hides the password.
 - **Fingerprint / Face ID** (passkeys): after logging in once with a password, open the account page (*Profil saya* for ahli, *Akaun* for amil, *Tetapan* for admin) and tap *Daftar cap jari peranti ini*. From then on, *Log masuk dengan cap jari / Face ID* on the login page signs in with the phone's or laptop's fingerprint, face or screen lock. Each device is set up once, and passkeys can be removed from the same page.
-- Each portal checks the role: an ahli account (or its fingerprint) cannot open the admin or amil portal.
+- Each portal checks the role: an ahli account (or its fingerprint) cannot open the admin or amil portal, and is sent back to its own.
+- **Admin → Pentadbir**: add more admins (name, email, password), reset another admin's password, or remove one (you cannot remove yourself or the last admin).
 
-![Landing](docs/screenshots/landing.png)
+![Login](docs/screenshots/login.png)
 
 <img src="docs/screenshots/login.png" alt="Login with email, eye icon and fingerprint" width="420" />
 
@@ -29,7 +30,7 @@ The interface is in Bahasa Melayu with a one-tap English toggle (BM / EN).
 ## Stack
 
 - **React 18 + Vite**, hosted on **Vercel**
-- **Supabase**: Postgres database, Auth (logins), Row Level Security (each role only sees its own data), one Edge Function (`admin-users`) for the admin to create amil/ahli logins
+- **Supabase**: Postgres database, Auth (logins), Row Level Security (each role only sees its own data), one Edge Function (`admin-users`) for the admin to create amil/ahli/admin logins
 - No other server is needed (Render is not used)
 
 ## How payments work
@@ -102,10 +103,11 @@ Row Level Security in Postgres enforces the roles, not just the UI:
 
 ```
 src/
-  App.jsx                 landing page + routes for the three portals
-  components/Portal.jsx   login, role check, header/tabs (one Supabase session per portal)
+  App.jsx                 routes: login page at / and the three portals
+  components/Login.jsx    single login page, sends each user to their role's portal
+  components/Portal.jsx   role check, header/tabs, account security
   components/MemberDetail.jsx  shared profile / dependents / 12-month payment grid
-  portals/admin/          Dashboard, Members, Amils, Payouts, Finance, Settings
+  portals/admin/          Dashboard, Members, Amils, Payouts, Finance, Admins, Settings
   portals/ahli/           Profile, Dependents, Pay (QR), My amil
   portals/amil/           My members, QR verification, Account
   lib/i18n.jsx            BM/EN strings: t('Bahasa Melayu', 'English')

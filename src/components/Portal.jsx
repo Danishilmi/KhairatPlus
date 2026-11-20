@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, Navigate, useLocation } from 'react-router-dom';
 import { getClient, configured, q } from '../lib/supabase.js';
-import { signIn, passkeySupported } from '../lib/auth.js';
+import { passkeySupported, roleHome } from '../lib/auth.js';
 import { fmtDate } from '../lib/format.js';
 import { useLang, useT, useErrorText } from '../lib/i18n.jsx';
-import { Field, Spinner, ErrorBox, ToastProvider, PasswordInput, FingerprintIcon } from './ui.jsx';
+import { Field, Spinner, ToastProvider, PasswordInput, FingerprintIcon } from './ui.jsx';
 
 const PortalCtx = createContext(null);
 export const usePortal = () => useContext(PortalCtx);
@@ -30,14 +30,16 @@ export function NotConfigured() {
   );
 }
 
-// Wraps a portal: handles session, role check, login screen, header and tabs.
-export function Portal({ role, title, accent, loginLabel, loginHint, tabs, children }) {
+// Wraps a portal: needs a signed-in user whose role matches this portal.
+// Not signed in → the login page at "/". Wrong role → that user's own portal.
+export function Portal({ role, title, accent, tabs, children }) {
   const t = useT();
-  const client = getClient(role);
+  const client = getClient();
+  const location = useLocation();
   const [session, setSession] = useState(undefined);
   const [profile, setProfile] = useState(null);
   const [settings, setSettings] = useState(null);
-  const [denied, setDenied] = useState(false);
+  const [redirect, setRedirect] = useState(null);
 
   useEffect(() => {
     if (!client) return;
@@ -52,9 +54,8 @@ export function Portal({ role, title, accent, loginLabel, loginHint, tabs, child
     (async () => {
       const p = await q(client.from('profiles').select('*').eq('id', session.user.id).maybeSingle()).catch(() => null);
       if (!alive) return;
-      // Local sign-out only: a global one would also end this user's session in their own portal.
-      if (!p || p.role !== role) { setDenied(true); await client.auth.signOut({ scope: 'local' }); setProfile(null); return; }
-      setDenied(false);
+      if (!p) { await client.auth.signOut({ scope: 'local' }); setRedirect({ to: '/', state: { error: 'no_role' } }); return; }
+      if (p.role !== role) { setRedirect({ to: roleHome(p.role) }); return; }
       const s = await q(client.from('settings').select('*').eq('id', 1).maybeSingle()).catch(() => null);
       if (alive) { setSettings(s); setProfile(p); }
     })();
@@ -62,8 +63,9 @@ export function Portal({ role, title, accent, loginLabel, loginHint, tabs, child
   }, [session, client, role]);
 
   if (!configured) return <NotConfigured />;
-  if (session === undefined || (session && !profile)) return <div className="center-page"><Spinner /></div>;
-  if (!session) return <Login client={client} role={role} title={title} accent={accent} loginLabel={loginLabel} loginHint={loginHint} denied={denied} />;
+  if (redirect) return <Navigate to={redirect.to} state={redirect.state} replace />;
+  if (session === null) return <Navigate to="/" state={{ from: location.pathname }} replace />;
+  if (session === undefined || !profile) return <div className="center-page"><Spinner /></div>;
 
   const value = { client, session, profile, settings, setSettings, role, signOut: () => client.auth.signOut() };
   return (
@@ -92,58 +94,6 @@ export function Portal({ role, title, accent, loginLabel, loginHint, tabs, child
         </div>
       </ToastProvider>
     </PortalCtx.Provider>
-  );
-}
-
-function Login({ client, title, accent, loginLabel, loginHint, denied }) {
-  const t = useT();
-  const errText = useErrorText();
-  const [id, setId] = useState('');
-  const [pw, setPw] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState(denied ? errText('wrong_role') : '');
-  const canPasskey = passkeySupported();
-
-  // On success the Portal takes over; it signs out again (and shows `denied`) if the role is wrong.
-  async function submit(e) {
-    e.preventDefault();
-    setBusy(true); setErr('');
-    try { await signIn(client, id, pw); } catch (e2) { setErr(errText(e2)); setBusy(false); }
-  }
-
-  async function passkey() {
-    setBusy(true); setErr('');
-    const { error } = await client.auth.signInWithPasskey();
-    if (error) { setErr(errText(error)); setBusy(false); }
-  }
-
-  return (
-    <div className={'login-page portal-' + accent}>
-      <div className="login-top"><Link to="/" className="back">← {t('Semua portal', 'All portals')}</Link><LangToggle /></div>
-      <form className="card login-card" onSubmit={submit}>
-        <img src="/favicon.svg" alt="" width="52" height="52" />
-        <h1>KhairatPlus</h1>
-        <p className="login-sub">{title}</p>
-        <ErrorBox>{err}</ErrorBox>
-        <Field label={loginLabel} hint={loginHint}>
-          <input value={id} onChange={(e) => setId(e.target.value)} autoComplete="username webauthn" required autoFocus inputMode="email" autoCapitalize="none" />
-        </Field>
-        <Field label={t('Kata laluan', 'Password')}>
-          <PasswordInput value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" required
-            showLabel={t('Tunjuk kata laluan', 'Show password')} hideLabel={t('Sembunyi kata laluan', 'Hide password')} />
-        </Field>
-        <button className="btn btn-primary btn-block" disabled={busy}>{busy ? t('Sedang log masuk…', 'Signing in…') : t('Log masuk', 'Log in')}</button>
-        {canPasskey && (
-          <>
-            <div className="divider">{t('atau', 'or')}</div>
-            <button type="button" className="btn btn-block btn-passkey" onClick={passkey} disabled={busy}>
-              <FingerprintIcon /> {t('Log masuk dengan cap jari / Face ID', 'Log in with fingerprint / Face ID')}
-            </button>
-            <p className="small muted" style={{ marginTop: 8 }}>{t('Daftar cap jari dahulu di halaman akaun selepas log masuk.', 'Set up fingerprint first on your account page after logging in.')}</p>
-          </>
-        )}
-      </form>
-    </div>
   );
 }
 
