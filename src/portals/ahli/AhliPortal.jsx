@@ -1,7 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate, Link } from 'react-router-dom';
 import QRCode from 'qrcode';
-import { dobFromIc } from '../../lib/icDate.js';
 import { Portal, usePortal, AccountSecurity } from '../../components/Portal.jsx';
 import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Badge } from '../../components/ui.jsx';
 import { MemberProfile, DependentsTable, PaymentsTable, MonthGrid, initials } from '../../components/MemberDetail.jsx';
@@ -136,17 +135,8 @@ function DependentForm({ memberId, dep, onClose, onSaved }) {
   const { client } = usePortal();
   const toast = useToast();
   const isNew = !dep.id;
-  const { values, bind, setValues } = useForm({ full_name: '', ic_no: '', relationship: 'child', dob: '', phone: '', ...dep });
+  const { values, bind } = useForm({ full_name: '', ic_no: '', relationship: 'child', dob: '', phone: '', ...dep });
   const [err, setErr] = useState('');
-  // Fill the birth date from the IC whenever a complete, valid IC is typed. Opening a saved dependent
-  // does not overwrite a date already there, and the date can still be changed by hand.
-  const lastIc = useRef(values.ic_no);
-  useEffect(() => {
-    if (values.ic_no === lastIc.current) return;
-    lastIc.current = values.ic_no;
-    const dob = dobFromIc(values.ic_no);
-    if (dob) setValues((v) => ({ ...v, dob }));
-  }, [values.ic_no]);
   async function submit(e) {
     e.preventDefault(); setErr('');
     const row = { full_name: values.full_name.trim(), ic_no: values.ic_no, relationship: values.relationship, dob: values.dob || null, phone: values.phone };
@@ -167,7 +157,7 @@ function DependentForm({ memberId, dep, onClose, onSaved }) {
           <Field label={t('Hubungan', 'Relationship')}>
             <select {...bind('relationship')}>{Object.keys(RELATIONSHIPS).map((r) => <option key={r} value={r}>{label(RELATIONSHIPS, r)}</option>)}</select>
           </Field>
-          <Field label={t('Tarikh lahir', 'Date of birth')} hint={t('Diisi automatik daripada No. KP', 'Filled in from the IC no.')}><input type="date" {...bind('dob')} /></Field>
+          <Field label={t('Tarikh lahir', 'Date of birth')}><input type="date" {...bind('dob')} /></Field>
           <Field label={t('Telefon (pilihan)', 'Phone (optional)')}><input type="tel" {...bind('phone')} /></Field>
         </div>
       </form>
