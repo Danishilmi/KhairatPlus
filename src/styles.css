@@ -7,7 +7,10 @@
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: var(--text);
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); font-size: 15px; line-height: 1.5; }
+body { margin: 0; background: var(--bg); font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+/* Safety net: never let one wide element make the phone browser zoom the whole page out. */
+html, body { max-width: 100%; overflow-x: clip; }
+td, th, code { overflow-wrap: normal; }
 a { color: var(--accent); }
 h1, h2, h3 { line-height: 1.25; margin: 0 0 .6rem; }
 h2 { font-size: 1.35rem; } h3 { font-size: 1.05rem; }
@@ -165,6 +168,10 @@ button.mcell:hover { outline: 2px solid var(--accent); }
   table.stack-sm td.num { text-align: left; }
   .months, table.stack-sm .months { min-width: 0; grid-template-columns: repeat(6, minmax(0, 1fr)); } /* two rows of six months on phones */
   .brand small { display: none; }
+  /* Show every tab on phones: wrap onto a second row instead of hiding some off-screen. */
+  .tabs { flex-wrap: wrap; overflow-x: visible; padding: 0 8px; }
+  .tab { padding: 8px 10px; font-size: 13.5px; }
+  .topbar-inner { padding: 8px 12px; gap: 8px; }
   th, td { padding: 9px 10px; }
 }
 
