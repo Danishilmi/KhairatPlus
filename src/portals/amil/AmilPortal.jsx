@@ -230,6 +230,7 @@ function Account({ amil, members }) {
           <dt>{t('Nama pengguna', 'Username')}</dt><dd><code>{amil.username}</code></dd>
           <dt>{t('E-mel', 'Email')}</dt><dd>{amil.email || '-'}</dd>
           <dt>{t('Telefon', 'Phone')}</dt><dd>{amil.phone || '-'}</dd>
+          <dt>{t('Tarikh lahir', 'Date of birth')}</dt><dd>{fmtDate(amil.dob)}</dd>
           <dt>{t('Kawasan jagaan', 'Area covered')}</dt><dd>{amil.area || '-'}</dd>
           <dt>{t('Bilangan ahli', 'Members')}</dt><dd>{members.length}</dd>
         </dl>

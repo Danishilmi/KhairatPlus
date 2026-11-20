@@ -3,6 +3,7 @@ import { usePortal } from '../../components/Portal.jsx';
 import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Search, PasswordInput } from '../../components/ui.jsx';
 import { useT, useErrorText } from '../../lib/i18n.jsx';
 import { q } from '../../lib/supabase.js';
+import { useDobFromIc } from '../../lib/icDate.js';
 import { adminFn } from '../../lib/adminFn.js';
 
 export default function Amils() {
@@ -70,9 +71,10 @@ function AmilForm({ amil, onClose, onSaved }) {
   const { client } = usePortal();
   const toast = useToast();
   const isNew = !amil.id;
-  const { values, bind } = useForm({ full_name: '', ic_no: '', phone: '', email: '', area: '', username: '', password: '', ...amil, password: '' });
+  const { values, bind, setValues } = useForm({ full_name: '', ic_no: '', phone: '', email: '', area: '', username: '', password: '', ...amil, password: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  useDobFromIc(values.ic_no, setValues);
 
   async function submit(e) {
     e.preventDefault(); setBusy(true); setErr('');
@@ -80,9 +82,10 @@ function AmilForm({ amil, onClose, onSaved }) {
       const email = values.email.trim().toLowerCase();
       const fields = { full_name: values.full_name.trim(), ic_no: values.ic_no, phone: values.phone, area: values.area };
       if (isNew) {
-        await adminFn(client, { action: 'create_amil', password: values.password, amil: { ...fields, email, username: values.username.trim().toLowerCase() } });
+        const res = await adminFn(client, { action: 'create_amil', password: values.password, amil: { ...fields, email, username: values.username.trim().toLowerCase() } });
+        if (values.dob && res.amil?.id) await q(client.from('amils').update({ dob: values.dob }).eq('id', res.amil.id));
       } else {
-        await q(client.from('amils').update(fields).eq('id', amil.id));
+        await q(client.from('amils').update({ ...fields, dob: values.dob || null }).eq('id', amil.id));
         await q(client.from('profiles').update({ full_name: fields.full_name }).eq('id', amil.user_id));
         if (email !== (amil.email || '')) await adminFn(client, { action: 'set_email', role: 'amil', id: amil.id, email });
         if (values.password) await adminFn(client, { action: 'set_password', role: 'amil', id: amil.id, password: values.password });
@@ -102,6 +105,7 @@ function AmilForm({ amil, onClose, onSaved }) {
           <Field label={t('Nama penuh', 'Full name')} wide><input {...bind('full_name')} required /></Field>
           <Field label={t('No. KP', 'IC no.')}><input {...bind('ic_no')} placeholder="700101-03-5011" /></Field>
           <Field label={t('Telefon', 'Phone')}><input {...bind('phone')} type="tel" /></Field>
+          <Field label={t('Tarikh lahir', 'Date of birth')} hint={t('Diisi automatik daripada No. KP', 'Filled in from the IC no.')}><input type="date" {...bind('dob')} /></Field>
           <Field label={t('E-mel log masuk (pilihan)', 'Login email (optional)')} hint={t('Amil boleh log masuk dengan e-mel ini atau nama pengguna', 'The amil can log in with this email or the username')}><input {...bind('email')} type="email" /></Field>
           <Field label={t('Kawasan jagaan', 'Area covered')}><input {...bind('area')} placeholder="Lorong Masjid" /></Field>
           <Field label={t('Nama pengguna (untuk log masuk)', 'Username (for login)')} hint={isNew ? t('Huruf kecil, contoh: ahmad.ismail', 'Lowercase, e.g. ahmad.ismail') : t('Tidak boleh diubah', 'Cannot be changed')}>
