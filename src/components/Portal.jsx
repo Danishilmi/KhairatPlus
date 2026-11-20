@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { NavLink, Link, Navigate, useLocation } from 'react-router-dom';
 import { getClient, configured, q } from '../lib/supabase.js';
-import { passkeySupported, roleHome } from '../lib/auth.js';
+import { passkeySupported, passkeysEnabled, roleHome } from '../lib/auth.js';
 import { fmtDate } from '../lib/format.js';
 import { useLang, useT, useErrorText } from '../lib/i18n.jsx';
 import { Field, Spinner, ToastProvider, PasswordInput, FingerprintIcon } from './ui.jsx';
@@ -131,24 +131,31 @@ export function ChangePassword() {
 export function Passkeys() {
   const t = useT();
   const errText = useErrorText();
-  const { client } = usePortal();
+  const { client, role } = usePortal();
+  const [enabled, setEnabled] = useState(undefined); // undefined while checking the server
   const [list, setList] = useState(null);
   const [err, setErr] = useState('');
   const [ok, setOk] = useState('');
   const [busy, setBusy] = useState(false);
   const supported = passkeySupported();
 
+  const isOff = (e) => /passkey_disabled|Passkeys are disabled/i.test(String(e?.code || '') + ' ' + String(e?.message || ''));
+
   async function load() {
     const { data, error } = await client.auth.passkey.list();
-    if (error) setErr(errText(error)); else setList(data || []);
+    if (error) { if (isOff(error)) setEnabled(false); else setErr(errText(error)); }
+    else setList(data || []);
   }
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => {
+    passkeysEnabled().then((on) => { setEnabled(on); if (on) load(); });
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, []);
 
   async function add() {
     setBusy(true); setErr(''); setOk('');
     const { error } = await client.auth.registerPasskey();
-    if (error) setErr(errText(error));
-    else { setOk(t('Cap jari didaftarkan. Lain kali, tekan "Log masuk dengan cap jari".', 'Fingerprint registered. Next time, tap "Log in with fingerprint".')); await load(); }
+    if (error) { if (isOff(error)) setEnabled(false); else setErr(errText(error)); }
+    else { setOk(t('Cap jari / Face ID didaftarkan. Lain kali, tekan "Log masuk dengan cap jari / Face ID".', 'Fingerprint / Face ID set up. Next time, tap "Log in with fingerprint / Face ID".')); await load(); }
     setBusy(false);
   }
   async function remove(p) {
@@ -175,9 +182,21 @@ export function Passkeys() {
           ))}
         </ul>
       )}
-      {supported
-        ? <button className="btn btn-primary" onClick={add} disabled={busy}>{t('Daftar cap jari peranti ini', 'Set up fingerprint on this device')}</button>
-        : <div className="alert alert-info small">{t('Pelayar ini tidak menyokong log masuk cap jari.', 'This browser does not support fingerprint login.')}</div>}
+      {enabled === false && (
+        <div className="alert alert-info small">
+          <strong>{t('Log masuk cap jari / Face ID belum diaktifkan pada pelayan.', 'Fingerprint / Face ID login is not turned on in the server yet.')}</strong>{' '}
+          {role === 'admin'
+            ? t('Untuk mengaktifkannya: di projek Supabase, buka Authentication → Passkeys dan aktifkan. Jika menggunakan Supabase tempatan, mulakan semula dengan "npx supabase stop" kemudian "npx supabase start" supaya tetapan dalam supabase/config.toml dibaca.',
+                'To turn it on: in your Supabase project, open Authentication → Passkeys and enable it. On a local Supabase, restart it with "npx supabase stop" then "npx supabase start" so it reads supabase/config.toml.')
+            : t('Sila minta pentadbir mengaktifkannya.', 'Please ask the admin to turn it on.')}
+        </div>
+      )}
+      {!supported && <div className="alert alert-info small">{t('Pelayar ini tidak menyokong log masuk cap jari / Face ID.', 'This browser does not support fingerprint / Face ID login.')}</div>}
+      {supported && (
+        <button className="btn btn-primary" onClick={add} disabled={busy || !enabled}>
+          <FingerprintIcon /> {busy ? t('Menunggu cap jari / Face ID…', 'Waiting for fingerprint / Face ID…') : t('Daftar cap jari / Face ID pada peranti ini', 'Set up fingerprint / Face ID on this device')}
+        </button>
+      )}
     </div>
   );
 }

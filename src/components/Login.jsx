@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { getClient, configured, q } from '../lib/supabase.js';
-import { signIn, passkeySupported, roleHome } from '../lib/auth.js';
+import { signIn, passkeySupported, passkeysEnabled, roleHome } from '../lib/auth.js';
 import { useT, useErrorText } from '../lib/i18n.jsx';
 import { Field, Spinner, ErrorBox, PasswordInput, FingerprintIcon } from './ui.jsx';
 import { LangToggle, NotConfigured } from './Portal.jsx';
@@ -19,7 +19,9 @@ export default function LoginPage() {
   const [pw, setPw] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(location.state?.error ? errText(location.state.error) : '');
-  const canPasskey = passkeySupported();
+  const [passkeyOn, setPasskeyOn] = useState(false);
+  const canPasskey = passkeySupported() && passkeyOn;
+  useEffect(() => { if (configured && passkeySupported()) passkeysEnabled().then(setPasskeyOn); }, []);
 
   useEffect(() => {
     if (!client) return;
@@ -88,7 +90,7 @@ export default function LoginPage() {
             <button type="button" className="btn btn-block btn-passkey" onClick={passkey} disabled={busy}>
               <FingerprintIcon /> {t('Log masuk dengan cap jari / Face ID', 'Log in with fingerprint / Face ID')}
             </button>
-            <p className="small muted" style={{ marginTop: 8 }}>{t('Daftar cap jari dahulu di halaman akaun selepas log masuk.', 'Set up fingerprint first on your account page after logging in.')}</p>
+            <p className="small muted" style={{ marginTop: 8 }}>{t('Daftar cap jari / Face ID dahulu di halaman akaun selepas log masuk.', 'Set up fingerprint / Face ID first on your account page after logging in.')}</p>
           </>
         )}
       </form>
