@@ -5,7 +5,7 @@ import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Sea
 import { MemberProfile, DependentsTable, PaymentsTable, MonthGrid, Legend } from '../../components/MemberDetail.jsx';
 import { useT, useErrorText, useLabel, useMonths, METHODS } from '../../lib/i18n.jsx';
 import { q } from '../../lib/supabase.js';
-import { rm, thisYear, thisMonth, arrearsFor, fmtDate } from '../../lib/format.js';
+import { rm, thisYear, thisMonth, arrearsFor, fmtDate, icSearchText } from '../../lib/format.js';
 
 export default function AmilPortal() {
   const t = useT();
@@ -59,7 +59,7 @@ function MyMembers({ amil, members, payments, dependents, reload }) {
   const rows = useMemo(() => {
     const s = search.toLowerCase();
     return members
-      .filter((m) => !s || [m.member_no, m.full_name, m.ic_no, m.address, m.phone].join(' ').toLowerCase().includes(s))
+      .filter((m) => !s || [m.member_no, m.full_name, icSearchText(m.ic_no), m.address, m.phone].join(' ').toLowerCase().includes(s))
       .filter((m) => !filter || (filter === 'owed' ? arrearsFor(m, payments, year).length > 0 : filter === 'unpaid_month' ? m.status === 'active' && !payments.some((p) => p.member_id === m.id && p.year === thisYear() && p.month === monthNow && p.status === 'paid') : true));
   }, [members, payments, search, filter, year, monthNow]);
 

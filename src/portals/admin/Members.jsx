@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { usePortal } from '../../components/Portal.jsx';
-import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Search, Badge, PasswordInput } from '../../components/ui.jsx';
+import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Search, Badge, PasswordInput, IcInput } from '../../components/ui.jsx';
 import { MemberProfile, DependentsTable, PaymentsTable, MonthGrid } from '../../components/MemberDetail.jsx';
 import { useT, useErrorText, useLabel, STATUS } from '../../lib/i18n.jsx';
 import { q } from '../../lib/supabase.js';
 import { adminFn } from '../../lib/adminFn.js';
-import { rm, fmtDate, thisYear, arrearsFor } from '../../lib/format.js';
+import { rm, fmtDate, thisYear, arrearsFor, icDigits, fmtIc, icSearchText } from '../../lib/format.js';
 import { loadAll, sum } from './data.js';
 
 export default function Members() {
@@ -23,7 +23,7 @@ export default function Members() {
     if (!data) return [];
     const s = search.toLowerCase();
     return data.members
-      .filter((m) => !s || [m.member_no, m.full_name, m.ic_no, m.address, m.phone].join(' ').toLowerCase().includes(s))
+      .filter((m) => !s || [m.member_no, m.full_name, icSearchText(m.ic_no), m.address, m.phone].join(' ').toLowerCase().includes(s))
       .filter((m) => !amilFilter || (amilFilter === 'none' ? !m.amil_id : m.amil_id === amilFilter))
       .filter((m) => !statusFilter || (statusFilter === 'arrears' ? arrearsFor(m, data.payments).length > 0 : m.status === statusFilter));
   }, [data, search, amilFilter, statusFilter]);
@@ -63,7 +63,7 @@ export default function Members() {
                 return (
                   <tr key={m.id} className="clickable" onClick={() => setViewId(m.id)}>
                     <td style={{ whiteSpace: 'nowrap' }}><strong>{m.member_no}</strong></td>
-                    <td>{m.full_name}<div className="small muted">{m.ic_no}</div></td>
+                    <td>{m.full_name}<div className="small muted">{fmtIc(m.ic_no)}</div></td>
                     <td className="small">{m.address || '-'}</td>
                     <td className="hide-sm small">{amilName(m.amil_id) || <span className="muted">-</span>}</td>
                     <td className="num">{data.dependents.filter((d) => d.member_id === m.id).length}</td>
@@ -121,7 +121,7 @@ function MemberForm({ member, amils, onClose, onSaved }) {
   async function submit(e) {
     e.preventDefault(); setBusy(true); setErr('');
     try {
-      const fields = { full_name: values.full_name.trim(), ic_no: values.ic_no, phone: values.phone, address: values.address, map_url: values.map_url, amil_id: values.amil_id || null, join_date: values.join_date };
+      const fields = { full_name: values.full_name.trim(), ic_no: icDigits(values.ic_no), phone: values.phone, address: values.address, map_url: values.map_url, amil_id: values.amil_id || null, join_date: values.join_date };
       if (isNew) {
         const res = await adminFn(client, { action: 'create_member', password: values.password, member: { ...fields, email: values.email.trim().toLowerCase() } });
         setCreated({ ...res.member, password: values.password });
@@ -162,7 +162,7 @@ function MemberForm({ member, amils, onClose, onSaved }) {
         {isNew && <div className="alert alert-info small">{t('ID Ahli (cth. KWMZ-0004) dijana secara automatik dan digunakan untuk log masuk.', 'The Member ID (e.g. KWMZ-0004) is generated automatically and used to log in.')}</div>}
         <div className="grid-2">
           <Field label={t('Nama penuh', 'Full name')} wide><input {...bind('full_name')} required /></Field>
-          <Field label={t('No. KP', 'IC no.')}><input {...bind('ic_no')} placeholder="800212-03-5233" /></Field>
+          <Field label={t('No. KP', 'IC no.')}><IcInput {...bind('ic_no')} placeholder="800212-03-5233" /></Field>
           <Field label={t('Telefon', 'Phone')}><input {...bind('phone')} type="tel" /></Field>
           <Field label={t('E-mel log masuk (pilihan)', 'Login email (optional)')} hint={t('Ahli boleh log masuk dengan e-mel ini atau ID Ahli', 'The member can log in with this email or the Member ID')} wide><input {...bind('email')} type="email" /></Field>
           <Field label={t('Lokasi rumah (alamat)', 'House location (address)')} wide><textarea {...bind('address')} placeholder="Lot 12, Lorong Masjid, Kg Wakaf Mek Zainab" /></Field>

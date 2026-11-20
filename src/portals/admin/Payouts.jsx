@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { usePortal } from '../../components/Portal.jsx';
-import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Stat } from '../../components/ui.jsx';
+import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Stat, IcInput } from '../../components/ui.jsx';
 import { useT, useErrorText, useLabel, METHODS, RELATIONSHIPS } from '../../lib/i18n.jsx';
 import { q } from '../../lib/supabase.js';
-import { rm, fmtDate } from '../../lib/format.js';
+import { rm, fmtDate, icDigits, fmtIc } from '../../lib/format.js';
 import { loadAll, sum } from './data.js';
 
 export default function Payouts() {
@@ -56,7 +56,7 @@ export default function Payouts() {
             <dt>{t('ID Ahli', 'Member ID')}</dt><dd>{memberNo(view.member_id)}</dd>
             <dt>{t('Tarikh meninggal', 'Date of death')}</dt><dd>{fmtDate(view.death_date)}</dd>
             <dt>{t('Waris', 'Next of kin')}</dt><dd>{view.nok_name}</dd>
-            <dt>{t('No. KP waris', 'Next of kin IC')}</dt><dd>{view.nok_ic || '-'}</dd>
+            <dt>{t('No. KP waris', 'Next of kin IC')}</dt><dd>{fmtIc(view.nok_ic) || '-'}</dd>
             <dt>{t('Hubungan', 'Relationship')}</dt><dd>{view.nok_relationship || '-'}</dd>
             <dt>{t('Telefon', 'Phone')}</dt><dd>{view.nok_phone || '-'}</dd>
             <dt>{t('Jumlah', 'Amount')}</dt><dd><strong>{rm(view.amount)}</strong></dd>
@@ -101,7 +101,7 @@ function PayoutForm({ data, onClose, onSaved }) {
       const isDep = values.who !== 'member';
       await q(client.rpc('record_payout', {
         p_member_id: values.member_id, p_deceased_type: isDep ? 'dependent' : 'member', p_dependent_id: isDep ? values.who : null,
-        p_death_date: values.death_date, p_nok_name: values.nok_name, p_nok_ic: values.nok_ic, p_nok_relationship: values.nok_relationship,
+        p_death_date: values.death_date, p_nok_name: values.nok_name, p_nok_ic: icDigits(values.nok_ic), p_nok_relationship: values.nok_relationship,
         p_nok_phone: values.nok_phone, p_amount: Number(values.amount), p_method: values.method, p_reference: values.reference,
         p_paid_at: values.paid_at, p_notes: values.notes
       }));
@@ -137,7 +137,7 @@ function PayoutForm({ data, onClose, onSaved }) {
           <Field label={t('Jumlah khairat (RM)', 'Payout amount (RM)')}><input type="number" min="1" step="0.01" {...bind('amount')} required /></Field>
           <h4 className="section-title field wide">{t('Waris penerima', 'Next of kin receiving payout')}</h4>
           <Field label={t('Nama waris', 'Name')}><input {...bind('nok_name')} required /></Field>
-          <Field label={t('No. KP waris', 'IC no.')}><input {...bind('nok_ic')} /></Field>
+          <Field label={t('No. KP waris', 'IC no.')}><IcInput {...bind('nok_ic')} /></Field>
           <Field label={t('Hubungan dengan si mati', 'Relationship to deceased')}><input {...bind('nok_relationship')} placeholder={t('cth. Isteri, Anak', 'e.g. Wife, Son')} /></Field>
           <Field label={t('Telefon', 'Phone')}><input {...bind('nok_phone')} type="tel" /></Field>
           <Field label={t('Kaedah bayaran', 'Payment method')}>

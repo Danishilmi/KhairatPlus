@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Routes, Route, Navigate, Link } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { Portal, usePortal, AccountSecurity } from '../../components/Portal.jsx';
-import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Badge } from '../../components/ui.jsx';
+import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Badge, IcInput } from '../../components/ui.jsx';
 import { MemberProfile, DependentsTable, PaymentsTable, MonthGrid, initials } from '../../components/MemberDetail.jsx';
 import { useT, useErrorText, useLabel, useMonths, RELATIONSHIPS } from '../../lib/i18n.jsx';
 import { q } from '../../lib/supabase.js';
-import { rm, thisYear, arrearsFor } from '../../lib/format.js';
+import { rm, thisYear, arrearsFor, icDigits, fmtIc } from '../../lib/format.js';
 
 export default function AhliPortal() {
   const t = useT();
@@ -86,7 +86,7 @@ function ProfileForm({ member, onClose, onSaved }) {
   async function submit(e) {
     e.preventDefault(); setErr('');
     try {
-      await q(client.from('members').update({ full_name: values.full_name.trim(), ic_no: values.ic_no, phone: values.phone, address: values.address, map_url: values.map_url }).eq('id', member.id));
+      await q(client.from('members').update({ full_name: values.full_name.trim(), ic_no: icDigits(values.ic_no), phone: values.phone, address: values.address, map_url: values.map_url }).eq('id', member.id));
       await q(client.from('profiles').update({ full_name: values.full_name.trim() }).eq('id', session.user.id)).catch(() => {});
       toast(t('Profil dikemas kini.', 'Profile updated.')); onSaved();
     } catch (e2) { setErr(errText(e2)); }
@@ -97,7 +97,7 @@ function ProfileForm({ member, onClose, onSaved }) {
         <ErrorBox>{err}</ErrorBox>
         <div className="grid-2">
           <Field label={t('Nama penuh', 'Full name')} wide><input {...bind('full_name')} required /></Field>
-          <Field label={t('No. KP', 'IC no.')}><input {...bind('ic_no')} /></Field>
+          <Field label={t('No. KP', 'IC no.')}><IcInput {...bind('ic_no')} /></Field>
           <Field label={t('Telefon', 'Phone')}><input type="tel" {...bind('phone')} /></Field>
           <Field label={t('Lokasi rumah (alamat)', 'House location (address)')} wide><textarea {...bind('address')} /></Field>
           <Field label={t('Pautan peta (pilihan)', 'Map link (optional)')} wide hint={t('Kongsi lokasi dari Google Maps / Waze', 'Share your location from Google Maps / Waze')}><input type="url" {...bind('map_url')} /></Field>
@@ -139,7 +139,7 @@ function DependentForm({ memberId, dep, onClose, onSaved }) {
   const [err, setErr] = useState('');
   async function submit(e) {
     e.preventDefault(); setErr('');
-    const row = { full_name: values.full_name.trim(), ic_no: values.ic_no, relationship: values.relationship, dob: values.dob || null, phone: values.phone };
+    const row = { full_name: values.full_name.trim(), ic_no: icDigits(values.ic_no), relationship: values.relationship, dob: values.dob || null, phone: values.phone };
     try {
       if (isNew) await q(client.from('dependents').insert({ ...row, member_id: memberId }));
       else await q(client.from('dependents').update(row).eq('id', dep.id));
@@ -153,7 +153,7 @@ function DependentForm({ memberId, dep, onClose, onSaved }) {
         <ErrorBox>{err}</ErrorBox>
         <div className="grid-2">
           <Field label={t('Nama penuh', 'Full name')} wide><input {...bind('full_name')} required /></Field>
-          <Field label={t('No. KP / Sijil lahir', 'IC / birth cert no.')}><input {...bind('ic_no')} /></Field>
+          <Field label={t('No. KP / MyKid', 'IC / MyKid no.')}><IcInput {...bind('ic_no')} /></Field>
           <Field label={t('Hubungan', 'Relationship')}>
             <select {...bind('relationship')}>{Object.keys(RELATIONSHIPS).map((r) => <option key={r} value={r}>{label(RELATIONSHIPS, r)}</option>)}</select>
           </Field>

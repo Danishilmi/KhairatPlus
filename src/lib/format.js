@@ -26,3 +26,18 @@ export function readFileAsDataUrl(file) {
     r.readAsDataURL(file);
   });
 }
+
+// Malaysian IC (No. KP): stored as 12 digits, shown as 000000-00-0000.
+export const icDigits = (v) => String(v ?? '').replace(/\D/g, '').slice(0, 12);
+// Formats however many digits there are so far, adding each dash once the next part starts.
+export const icMask = (digits) => {
+  const d = icDigits(digits);
+  return d.slice(0, 6) + (d.length > 6 ? '-' + d.slice(6, 8) : '') + (d.length > 8 ? '-' + d.slice(8) : '');
+};
+// For display: full 12-digit ICs get dashes (old records may already have them); anything else is shown as it is.
+export const fmtIc = (v) => {
+  const d = String(v ?? '').replace(/\D/g, '');
+  return d.length === 12 ? icMask(d) : (v || '');
+};
+// Text to search on, so "800212035233" and "800212-03-5233" both match.
+export const icSearchText = (v) => `${v || ''} ${icDigits(v)} ${fmtIc(v)}`;

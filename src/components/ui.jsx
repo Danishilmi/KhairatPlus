@@ -1,5 +1,6 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLabel, STATUS, useT } from '../lib/i18n.jsx';
+import { icDigits, icMask } from '../lib/format.js';
 
 export function Field({ label, hint, children, wide }) {
   return (
@@ -122,6 +123,40 @@ export const FingerprintIcon = () => (
     <path d="M14.8 20.5c.5-1.3.9-2.7 1.1-4.2" /><path d="M3.5 10a9 9 0 0 1 16.4-3.6" /><path d="M20.6 10.5c.3 2.3.2 4.6-.3 6.8" /><path d="M12 11v.01" />
   </svg>
 );
+
+// IC (No. KP) box: takes digits only (up to 12) and shows them as 000000-00-0000.
+// Works with useForm's bind(): onChange gets an event-like object whose target.value is the plain digits. The browser blocks saving unless the box is empty or has all 12 digits
+// (pass required to make it compulsory).
+export function IcInput({ value, onChange, ...props }) {
+  const t = useT();
+  const ref = useRef();
+  const caret = useRef(null);
+  const shown = icMask(value);
+  useLayoutEffect(() => {
+    if (caret.current == null || !ref.current || document.activeElement !== ref.current) return;
+    ref.current.setSelectionRange(caret.current, caret.current);
+    caret.current = null;
+  });
+  function change(e) {
+    const el = e.target;
+    const pos = el.selectionStart ?? el.value.length;
+    let digits = icDigits(el.value);
+    let before = icDigits(el.value.slice(0, pos)).length;
+    // Backspace or Delete on a dash removes the digit beside it instead of doing nothing.
+    const kind = e.nativeEvent?.inputType || '';
+    if (digits === icDigits(value) && kind.startsWith('delete')) {
+      if (kind === 'deleteContentBackward' && before > 0) { digits = digits.slice(0, before - 1) + digits.slice(before); before -= 1; }
+      else if (kind === 'deleteContentForward') digits = digits.slice(0, before) + digits.slice(before + 1);
+    }
+    caret.current = icMask(digits.slice(0, before)).length;
+    onChange({ target: { value: digits } });
+  }
+  return (
+    <input {...props} ref={ref} value={shown} onChange={change} inputMode="numeric" autoComplete="off" maxLength={14}
+      placeholder={props.placeholder || '000000-00-0000'} pattern="\d{6}-\d{2}-\d{4}"
+      title={t('No. KP mesti 12 digit, contoh 060501-03-0034', 'IC no. must be 12 digits, e.g. 060501-03-0034')} />
+  );
+}
 
 export function Search({ value, onChange, placeholder }) {
   return <input className="search" type="search" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />;

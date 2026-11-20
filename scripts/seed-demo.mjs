@@ -24,8 +24,8 @@ must(await sb.from('profiles').insert({ id: adminId, role: 'admin', full_name: '
 
 const amils = [];
 for (const [i, a] of [
-  { full_name: 'Ahmad bin Ismail', ic_no: '700101-03-5011', phone: '012-3456789', area: 'Lorong Masjid' },
-  { full_name: 'Rosli bin Hassan', ic_no: '750505-03-5123', phone: '013-9876543', area: 'Jalan Pantai' }
+  { full_name: 'Ahmad bin Ismail', ic_no: '700101035011', phone: '012-3456789', area: 'Lorong Masjid' },
+  { full_name: 'Rosli bin Hassan', ic_no: '750505035123', phone: '013-9876543', area: 'Jalan Pantai' }
 ].entries()) {
   const username = `amil${i + 1}`;
   const uid = await user(`${username}@${DOMAIN}`, 'amil123');
@@ -36,9 +36,9 @@ for (const [i, a] of [
 const year = new Date().getFullYear();
 const month = new Date().getMonth() + 1;
 const members = [
-  { full_name: 'Mohd Zaki bin Abdullah', ic_no: '800212-03-5233', phone: '019-1112233', address: 'Lot 12, Lorong Masjid, Kg Wakaf Mek Zainab, 15100 Kota Bharu, Kelantan', amil: 0 },
-  { full_name: 'Siti Aminah binti Yusof', ic_no: '820830-03-5422', phone: '017-2223344', address: 'Lot 45, Lorong Masjid, Kg Wakaf Mek Zainab, 15100 Kota Bharu, Kelantan', amil: 0 },
-  { full_name: 'Che Mat bin Che Lah', ic_no: '650915-03-5099', phone: '014-5556677', address: 'Lot 7, Jalan Pantai, Kg Wakaf Mek Zainab, 15100 Kota Bharu, Kelantan', amil: 1 }
+  { full_name: 'Mohd Zaki bin Abdullah', ic_no: '800212035233', phone: '019-1112233', address: 'Lot 12, Lorong Masjid, Kg Wakaf Mek Zainab, 15100 Kota Bharu, Kelantan', amil: 0 },
+  { full_name: 'Siti Aminah binti Yusof', ic_no: '820830035422', phone: '017-2223344', address: 'Lot 45, Lorong Masjid, Kg Wakaf Mek Zainab, 15100 Kota Bharu, Kelantan', amil: 0 },
+  { full_name: 'Che Mat bin Che Lah', ic_no: '650915035099', phone: '014-5556677', address: 'Lot 7, Jalan Pantai, Kg Wakaf Mek Zainab, 15100 Kota Bharu, Kelantan', amil: 1 }
 ];
 for (const [i, { amil, ...m }] of members.entries()) {
   const row = must(await sb.from('members').insert({ ...m, amil_id: amils[amil].id, join_date: `${year - 1}-01-01` }).select().single());
@@ -49,9 +49,9 @@ for (const [i, { amil, ...m }] of members.entries()) {
   const upTo = Math.max(1, month - i);
   must(await sb.from('payments').insert(Array.from({ length: upTo }, (_, k) => ({ member_id: row.id, year, month: k + 1, amount: 5, method: 'cash', status: 'paid', recorded_by: amils[amil].user_id }))));
   if (i === 0) must(await sb.from('dependents').insert([
-    { member_id: row.id, full_name: 'Nor Azura binti Ali', ic_no: '830404-03-5566', relationship: 'spouse', dob: '1983-04-04' },
-    { member_id: row.id, full_name: 'Muhammad Irfan bin Mohd Zaki', ic_no: '100707-03-5011', relationship: 'child', dob: '2010-07-07' }
+    { member_id: row.id, full_name: 'Nor Azura binti Ali', ic_no: '830404035566', relationship: 'spouse', dob: '1983-04-04' },
+    { member_id: row.id, full_name: 'Muhammad Irfan bin Mohd Zaki', ic_no: '100707035011', relationship: 'child', dob: '2010-07-07' }
   ]));
-  if (i === 2) must(await sb.from('dependents').insert({ member_id: row.id, full_name: 'Fatimah binti Daud', ic_no: '670101-03-5122', relationship: 'spouse', dob: '1967-01-01' }));
+  if (i === 2) must(await sb.from('dependents').insert({ member_id: row.id, full_name: 'Fatimah binti Daud', ic_no: '670101035122', relationship: 'spouse', dob: '1967-01-01' }));
 }
 console.log('Demo data created. Admin login: admin@khairatplus.local / admin123');
