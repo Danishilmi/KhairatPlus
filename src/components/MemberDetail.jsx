@@ -1,6 +1,6 @@
 import React from 'react';
 import { useT, useLabel, RELATIONSHIPS, METHODS, useMonths } from '../lib/i18n.jsx';
-import { rm, fmtDate, thisYear, thisMonth } from '../lib/format.js';
+import { rm, fmtDate, thisYear, thisMonth, fmtIc } from '../lib/format.js';
 import { Badge, Empty } from './ui.jsx';
 
 export function initials(name) {
@@ -60,7 +60,7 @@ export function DependentsTable({ dependents, onEdit, onDelete }) {
           {dependents.map((d) => (
             <tr key={d.id}>
               <td><strong>{d.full_name}</strong></td>
-              <td>{d.ic_no || '-'}</td>
+              <td>{fmtIc(d.ic_no) || '-'}</td>
               <td>{label(RELATIONSHIPS, d.relationship)}</td>
               <td>{fmtDate(d.dob)}</td>
               <td>{d.phone || '-'}</td>
@@ -119,7 +119,7 @@ export function MemberProfile({ member, amilName }) {
       </div>
       <dl className="dl">
         <dt>{t('ID Ahli', 'Member ID')}</dt><dd>{member.member_no}</dd>
-        <dt>{t('No. KP', 'IC no.')}</dt><dd>{member.ic_no || '-'}</dd>
+        <dt>{t('No. KP', 'IC no.')}</dt><dd>{fmtIc(member.ic_no) || '-'}</dd>
         <dt>{t('Telefon', 'Phone')}</dt><dd>{member.phone ? <a href={'tel:' + member.phone}>{member.phone}</a> : '-'}</dd>
         <dt>{t('Tarikh lahir', 'Date of birth')}</dt><dd>{fmtDate(member.dob)}</dd>
         {member.email && <><dt>{t('E-mel', 'Email')}</dt><dd>{member.email}</dd></>}

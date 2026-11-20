@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { usePortal } from '../../components/Portal.jsx';
-import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Search, PasswordInput } from '../../components/ui.jsx';
+import { useLoad, Spinner, ErrorBox, Modal, Field, useForm, useToast, Empty, Search, PasswordInput, IcInput } from '../../components/ui.jsx';
 import { useT, useErrorText } from '../../lib/i18n.jsx';
 import { q } from '../../lib/supabase.js';
 import { useDobFromIc } from '../../lib/icDate.js';
 import { adminFn } from '../../lib/adminFn.js';
+import { icDigits, fmtIc } from '../../lib/format.js';
 
 export default function Amils() {
   const t = useT();
@@ -48,7 +49,7 @@ export default function Amils() {
             <tbody>
               {list.map((a) => (
                 <tr key={a.id}>
-                  <td><strong>{a.full_name}</strong><div className="small muted">{a.ic_no}</div></td>
+                  <td><strong>{a.full_name}</strong><div className="small muted">{fmtIc(a.ic_no)}</div></td>
                   <td><code>{a.username}</code></td>
                   <td>{a.phone || '-'}</td>
                   <td>{a.area || '-'}</td>
@@ -80,7 +81,7 @@ function AmilForm({ amil, onClose, onSaved }) {
     e.preventDefault(); setBusy(true); setErr('');
     try {
       const email = values.email.trim().toLowerCase();
-      const fields = { full_name: values.full_name.trim(), ic_no: values.ic_no, phone: values.phone, area: values.area };
+      const fields = { full_name: values.full_name.trim(), ic_no: icDigits(values.ic_no), phone: values.phone, area: values.area };
       if (isNew) {
         const res = await adminFn(client, { action: 'create_amil', password: values.password, amil: { ...fields, email, username: values.username.trim().toLowerCase() } });
         if (values.dob && res.amil?.id) await q(client.from('amils').update({ dob: values.dob }).eq('id', res.amil.id));
@@ -103,7 +104,7 @@ function AmilForm({ amil, onClose, onSaved }) {
         <ErrorBox>{err}</ErrorBox>
         <div className="grid-2">
           <Field label={t('Nama penuh', 'Full name')} wide><input {...bind('full_name')} required /></Field>
-          <Field label={t('No. KP', 'IC no.')}><input {...bind('ic_no')} placeholder="700101-03-5011" /></Field>
+          <Field label={t('No. KP', 'IC no.')}><IcInput {...bind('ic_no')} placeholder="700101-03-5011" /></Field>
           <Field label={t('Telefon', 'Phone')}><input {...bind('phone')} type="tel" /></Field>
           <Field label={t('Tarikh lahir', 'Date of birth')} hint={t('Diisi automatik daripada No. KP', 'Filled in from the IC no.')}><input type="date" {...bind('dob')} /></Field>
           <Field label={t('E-mel log masuk (pilihan)', 'Login email (optional)')} hint={t('Amil boleh log masuk dengan e-mel ini atau nama pengguna', 'The amil can log in with this email or the username')}><input {...bind('email')} type="email" /></Field>
