@@ -107,9 +107,19 @@ const Eye = ({ off }) => (
 // Password field with an eye button to show or hide what was typed.
 export function PasswordInput({ showLabel = 'Show password', hideLabel = 'Hide password', ...props }) {
   const [show, setShow] = useState(false);
+  const ref = useRef(null);
+  // Password managers only save a field that is type="password" when the form is sent,
+  // so hide the password again on submit (this runs before the form's own onSubmit).
+  useEffect(() => {
+    const form = ref.current?.form;
+    if (!form) return undefined;
+    const hide = () => { if (ref.current) ref.current.type = 'password'; setShow(false); };
+    form.addEventListener('submit', hide, true);
+    return () => form.removeEventListener('submit', hide, true);
+  }, []);
   return (
     <div className="pw-wrap">
-      <input {...props} type={show ? 'text' : 'password'} />
+      <input {...props} ref={ref} type={show ? 'text' : 'password'} />
       <button type="button" className="pw-eye" onClick={() => setShow((v) => !v)} aria-label={show ? hideLabel : showLabel} aria-pressed={show} title={show ? hideLabel : showLabel}>
         <Eye off={show} />
       </button>
