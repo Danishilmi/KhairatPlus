@@ -1,8 +1,8 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase.js';
 
 // One login page for everyone; the account's role (profiles.role) decides the portal.
-// Everyone can log in with an email. Ahli can also use their Member ID (e.g. KWMZ-0001)
-// and amil their username: the admin-users Edge Function looks up that account's email,
+// Everyone can log in with an email. Ahli can also use their Member ID (e.g. KWMZ-0001),
+// and amil and ahli a username they choose on their account page: the admin-users Edge Function looks up that account's email,
 // signs in on the server and returns the session, so emails are never exposed.
 export const LOGIN_DOMAIN = 'khairatplus.local'; // keep in sync with supabase/functions/admin-users/index.ts
 export const toEmail = (id) => {

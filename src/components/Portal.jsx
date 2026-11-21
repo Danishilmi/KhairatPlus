@@ -4,6 +4,7 @@ import { getClient, configured, q } from '../lib/supabase.js';
 import { passkeySupported, passkeysEnabled, roleHome, saveToPasswordManager, lastLoginId, isInternalEmail } from '../lib/auth.js';
 import { fmtDate } from '../lib/format.js';
 import { useLang, useT, useErrorText } from '../lib/i18n.jsx';
+import { adminFn } from '../lib/adminFn.js';
 import { Field, Spinner, ToastProvider, PasswordInput, FingerprintIcon } from './ui.jsx';
 
 const PortalCtx = createContext(null);
@@ -67,7 +68,7 @@ export function Portal({ role, title, accent, tabs, children }) {
   if (session === null) return <Navigate to="/" state={{ from: location.pathname }} replace />;
   if (session === undefined || !profile) return <div className="center-page"><Spinner /></div>;
 
-  const value = { client, session, profile, settings, setSettings, role, signOut: () => client.auth.signOut() };
+  const value = { client, session, profile, setProfile, settings, setSettings, role, signOut: () => client.auth.signOut() };
   return (
     <PortalCtx.Provider value={value}>
       <ToastProvider>
@@ -207,6 +208,44 @@ export function Passkeys() {
   );
 }
 
+// Amil and ahli pick their own login username, so they don't have to remember a Member ID.
+// The Member ID (and email, if set) keeps working alongside it.
+export function ChangeUsername() {
+  const t = useT();
+  const errText = useErrorText();
+  const { client, profile, setProfile } = usePortal();
+  const [value, setValue] = useState(profile.username || '');
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  async function submit(e) {
+    e.preventDefault();
+    setBusy(true); setMsg(null);
+    try {
+      const res = await adminFn(client, { action: 'set_username', username: value.trim().toLowerCase() });
+      setProfile({ ...profile, username: res.username });
+      setValue(res.username);
+      setMsg({ ok: t(`Nama pengguna disimpan. Lain kali log masuk dengan "${res.username}".`, `Username saved. Next time, log in with "${res.username}".`) });
+    } catch (e2) { setMsg({ err: errText(e2) }); }
+    setBusy(false);
+  }
+  return (
+    <form className="card" onSubmit={submit}>
+      <h3>{t('Nama pengguna untuk log masuk', 'Login username')}</h3>
+      <p className="small muted">{profile.role === 'ahli'
+        ? t('Pilih nama pengguna yang mudah diingat. Anda masih boleh log masuk dengan ID Ahli anda.', 'Choose a username that is easy to remember. You can still log in with your Member ID.')
+        : t('Pilih nama pengguna yang mudah diingat. Nama pengguna lama tidak boleh digunakan lagi selepas ditukar.', 'Choose a username that is easy to remember. The old username stops working once you change it.')}</p>
+      {msg?.err && <div className="alert alert-error">{msg.err}</div>}
+      {msg?.ok && <div className="alert alert-ok">{msg.ok}</div>}
+      <Field label={t('Nama pengguna', 'Username')} hint={t('3-30 aksara: huruf kecil, nombor, titik, sengkang. Contoh: ali.ahmad', '3-30 characters: lowercase letters, numbers, dots, dashes. E.g. ali.ahmad')}>
+        <input value={value} onChange={(e) => setValue(e.target.value.toLowerCase())} required minLength={3} maxLength={30}
+          pattern="[a-z0-9._\-]{3,30}" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="username" />
+      </Field>
+      <button className="btn btn-primary" disabled={busy || value.trim().toLowerCase() === profile.username}>{busy ? t('Menyimpan…', 'Saving…') : t('Simpan', 'Save')}</button>
+    </form>
+  );
+}
+
 export function AccountSecurity() {
-  return <><Passkeys /><ChangePassword /></>;
+  const { role } = usePortal();
+  return <>{role !== 'admin' && <ChangeUsername />}<Passkeys /><ChangePassword /></>;
 }

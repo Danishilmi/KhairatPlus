@@ -79,7 +79,7 @@ export default function LoginPage() {
         <p className="login-sub">{t('Khairat Kematian Kampung Wakaf Mek Zainab', 'Kampung Wakaf Mek Zainab Bereavement Fund')}</p>
         <ErrorBox>{err}</ErrorBox>
         <Field label={t('E-mel, ID Ahli atau nama pengguna', 'Email, Member ID or username')}
-          hint={t('Contoh: ali@gmail.com, KWMZ-0001 atau amil1', 'Example: ali@gmail.com, KWMZ-0001 or amil1')}>
+          hint={t('Contoh: ali@gmail.com, KWMZ-0001 atau ali.ahmad', 'Example: ali@gmail.com, KWMZ-0001 or ali.ahmad')}>
           <input id="login-username" name="username" value={id} onChange={(e) => setId(e.target.value)} autoComplete="username webauthn" required autoFocus inputMode="email" autoCapitalize="none" />
         </Field>
         <Field label={t('Kata laluan', 'Password')}>
