@@ -75,7 +75,7 @@ export function Portal({ role, title, accent, tabs, children }) {
           <header className="topbar">
             <div className="topbar-inner">
               <Link to={'/' + role} className="brand">
-                <img src="/favicon.svg" alt="" width="30" height="30" />
+                <img src="/logo.png" alt="" width="36" height="36" />
                 <span><strong>KhairatPlus</strong><small>{title}</small></span>
               </Link>
               <div className="topbar-right">

@@ -71,7 +71,7 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-top"><span /><LangToggle /></div>
       <form className="card login-card" onSubmit={submit}>
-        <img src="/favicon.svg" alt="" width="52" height="52" />
+        <img src="/logo.png" alt="KhairatPlus" width="96" height="96" />
         <h1>KhairatPlus</h1>
         <p className="login-sub">{t('Khairat Kematian Kampung Wakaf Mek Zainab', 'Kampung Wakaf Mek Zainab Bereavement Fund')}</p>
         <ErrorBox>{err}</ErrorBox>
