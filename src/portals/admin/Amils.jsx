@@ -88,6 +88,8 @@ function AmilForm({ amil, onClose, onSaved }) {
       } else {
         await q(client.from('amils').update({ ...fields, dob: values.dob || null }).eq('id', amil.id));
         await q(client.from('profiles').update({ full_name: fields.full_name }).eq('id', amil.user_id));
+        const username = values.username.trim().toLowerCase();
+        if (username !== (amil.username || '')) await adminFn(client, { action: 'set_username', role: 'amil', id: amil.id, username });
         if (email !== (amil.email || '')) await adminFn(client, { action: 'set_email', role: 'amil', id: amil.id, email });
         if (values.password) await adminFn(client, { action: 'set_password', role: 'amil', id: amil.id, password: values.password });
       }
@@ -109,8 +111,8 @@ function AmilForm({ amil, onClose, onSaved }) {
           <Field label={t('Tarikh lahir', 'Date of birth')} hint={t('Diisi automatik daripada No. KP', 'Filled in from the IC no.')}><input type="date" {...bind('dob')} /></Field>
           <Field label={t('E-mel log masuk (pilihan)', 'Login email (optional)')} hint={t('Amil boleh log masuk dengan e-mel ini atau nama pengguna', 'The amil can log in with this email or the username')}><input {...bind('email')} type="email" /></Field>
           <Field label={t('Kawasan jagaan', 'Area covered')}><input {...bind('area')} placeholder="Lorong Masjid" /></Field>
-          <Field label={t('Nama pengguna (untuk log masuk)', 'Username (for login)')} hint={isNew ? t('Huruf kecil, contoh: ahmad.ismail', 'Lowercase, e.g. ahmad.ismail') : t('Tidak boleh diubah', 'Cannot be changed')}>
-            <input {...bind('username')} required={isNew} disabled={!isNew} pattern="[a-zA-Z0-9._\-]{3,30}" />
+          <Field label={t('Nama pengguna (untuk log masuk)', 'Username (for login)')} hint={isNew ? t('Huruf kecil, contoh: ahmad.ismail', 'Lowercase, e.g. ahmad.ismail') : t('Amil juga boleh menukarnya sendiri', 'The amil can also change it themselves')}>
+            <input {...bind('username')} required pattern="[a-zA-Z0-9._\-]{3,30}" autoCapitalize="none" />
           </Field>
           <Field label={isNew ? t('Kata laluan', 'Password') : t('Kata laluan baharu (kosongkan jika tiada perubahan)', 'New password (leave blank to keep)')}>
             <PasswordInput {...bind('password')} minLength={6} required={isNew} autoComplete="new-password" showLabel={t('Tunjuk kata laluan', 'Show password')} hideLabel={t('Sembunyi kata laluan', 'Hide password')} />

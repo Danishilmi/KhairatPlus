@@ -60,7 +60,7 @@ export function useErrorText() {
       [/webauthn_challenge_expired/i, t('Masa tamat. Sila cuba lagi.', 'Timed out. Please try again.')],
       [/passkey_not_found|credential.*not found|webauthn_credential/i, t('Cap jari ini belum didaftarkan untuk mana-mana akaun.', 'This fingerprint is not registered to any account.')],
       [/username_taken|already/i, t('Nama pengguna sudah digunakan.', 'That username is already taken.')],
-      [/invalid_username/, t('Nama pengguna 3-30 aksara: huruf kecil, nombor, titik, sengkang.', 'Username must be 3-30 characters: lowercase letters, numbers, dots, dashes.')],
+      [/invalid_username/, t('Nama pengguna 3-30 aksara: huruf kecil, nombor, titik, sengkang, dan bukan dalam bentuk ID Ahli.', 'Username must be 3-30 characters: lowercase letters, numbers, dots, dashes, and not shaped like a Member ID.')],
       [/password_too_short|Password should be/i, t('Kata laluan sekurang-kurangnya 6 aksara.', 'Password must be at least 6 characters.')],
       [/already_paid/, t('Bulan ini sudah dibayar.', 'That month is already paid.')],
       [/missing_reference/, t('Sila masukkan no. rujukan transaksi.', 'Please enter the transaction reference.')],

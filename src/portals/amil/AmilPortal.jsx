@@ -221,13 +221,14 @@ function Pending({ members, payments, reload }) {
 
 function Account({ amil, members }) {
   const t = useT();
+  const { profile } = usePortal();
   return (
     <>
       <div className="card narrow">
         <h3>{t('Profil amil', 'Amil profile')}</h3>
         <dl className="dl">
           <dt>{t('Nama', 'Name')}</dt><dd>{amil.full_name}</dd>
-          <dt>{t('Nama pengguna', 'Username')}</dt><dd><code>{amil.username}</code></dd>
+          <dt>{t('Nama pengguna', 'Username')}</dt><dd><code>{profile.username || amil.username}</code></dd>
           <dt>{t('E-mel', 'Email')}</dt><dd>{amil.email || '-'}</dd>
           <dt>{t('Telefon', 'Phone')}</dt><dd>{amil.phone || '-'}</dd>
           <dt>{t('Tarikh lahir', 'Date of birth')}</dt><dd>{fmtDate(amil.dob)}</dd>

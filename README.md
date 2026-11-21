@@ -14,7 +14,7 @@ The interface is in Bahasa Melayu with a one-tap English toggle (BM / EN).
 
 ### Logging in
 
-- **Email + password** on the single login page. Ahli can also type their Member ID and amil their username instead of the email. The eye icon shows or hides the password.
+- **Email + password** on the single login page. Ahli can also type their Member ID, and both ahli and amil can type a username they pick themselves on their account page (Akaun / Profil saya → Nama pengguna untuk log masuk). The Member ID keeps working after a member picks a username. The eye icon shows or hides the password.
 - **Fingerprint / Face ID** (passkeys): after logging in once with a password, open the account page (*Profil saya* for ahli, *Akaun* for amil, *Tetapan* for admin) and tap *Daftar cap jari / Face ID pada peranti ini* (*Set up fingerprint / Face ID on this device*). From then on, *Log masuk dengan cap jari / Face ID* on the login page signs in with the phone's or laptop's fingerprint, face or screen lock. Each device is set up once, and passkeys can be removed from the same page.
 - Each portal checks the role: an ahli account (or its fingerprint) cannot open the admin or amil portal, and is sent back to its own.
 - **Admin → Pentadbir**: add more admins (name, email, password), reset another admin's password, or remove one (you cannot remove yourself or the last admin).
@@ -84,7 +84,7 @@ Logins: `admin@khairatplus.local` / `admin123`, amil `amil1` or `amil2` / `amil1
 
 ## Day-to-day use
 
-- **Admin → Amil → Tambah amil**: name, phone, area, a username, an optional login email, and a password. The amil can log in with the email or the username.
+- **Admin → Amil → Tambah amil**: name, phone, area, a username, an optional login email, and a password. The amil can log in with the email or the username, and can change the username later on their account page (the admin can also change it here).
 - **Admin → Ahli → Daftar ahli**: the Member ID (`KWMZ-0001`, `KWMZ-0002`, …) is generated automatically. Choose the amil who looks after them, optionally add their email, and set an initial password; the app shows the login details to hand to the member.
 - **Admin → Bayaran khairat → Rekod kematian & bayaran**: choose the member, then who passed away (the member or one of their dependents). The next of kin is pre-filled (spouse for a member, the member for a dependent) and the default payout amount comes from *Tetapan*. This marks the person as deceased and records the payout.
 - **Admin → Kewangan**: fund balance, monthly collections vs payouts, collections per amil, and members in arrears.
