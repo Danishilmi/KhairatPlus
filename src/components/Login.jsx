@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { getClient, configured, q } from '../lib/supabase.js';
-import { signIn, passkeySupported, passkeysEnabled, roleHome } from '../lib/auth.js';
+import { signIn, saveToPasswordManager, passkeySupported, passkeysEnabled, roleHome } from '../lib/auth.js';
 import { useT, useErrorText } from '../lib/i18n.jsx';
 import { Field, Spinner, ErrorBox, PasswordInput, FingerprintIcon } from './ui.jsx';
 import { LangToggle, NotConfigured } from './Portal.jsx';
@@ -58,7 +58,10 @@ export default function LoginPage() {
   async function submit(e) {
     e.preventDefault();
     setBusy(true); setErr('');
-    try { await signIn(client, id, pw); } catch (e2) { setErr(errText(e2)); setBusy(false); }
+    try {
+      await signIn(client, id, pw);
+      saveToPasswordManager(id.trim(), pw); // offer to save it in Google Password Manager / iCloud Keychain
+    } catch (e2) { setErr(errText(e2)); setBusy(false); }
   }
 
   async function passkey() {
@@ -70,17 +73,17 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-top"><span /><LangToggle /></div>
-      <form className="card login-card" onSubmit={submit}>
+      <form className="card login-card" onSubmit={submit} method="post" action="/" name="login">
         <img src="/logo.png" alt="KhairatPlus" width="96" height="96" />
         <h1>KhairatPlus</h1>
         <p className="login-sub">{t('Khairat Kematian Kampung Wakaf Mek Zainab', 'Kampung Wakaf Mek Zainab Bereavement Fund')}</p>
         <ErrorBox>{err}</ErrorBox>
         <Field label={t('E-mel, ID Ahli atau nama pengguna', 'Email, Member ID or username')}
           hint={t('Contoh: ali@gmail.com, KWMZ-0001 atau ali.ahmad', 'Example: ali@gmail.com, KWMZ-0001 or ali.ahmad')}>
-          <input value={id} onChange={(e) => setId(e.target.value)} autoComplete="username webauthn" required autoFocus inputMode="email" autoCapitalize="none" />
+          <input id="login-username" name="username" value={id} onChange={(e) => setId(e.target.value)} autoComplete="username webauthn" required autoFocus inputMode="email" autoCapitalize="none" />
         </Field>
         <Field label={t('Kata laluan', 'Password')}>
-          <PasswordInput value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" required
+          <PasswordInput id="login-password" name="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" required
             showLabel={t('Tunjuk kata laluan', 'Show password')} hideLabel={t('Sembunyi kata laluan', 'Hide password')} />
         </Field>
         <button className="btn btn-primary btn-block" disabled={busy}>{busy ? t('Sedang log masuk…', 'Signing in…') : t('Log masuk', 'Log in')}</button>
