@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { NavLink, Link, Navigate, useLocation } from 'react-router-dom';
 import { getClient, configured, q } from '../lib/supabase.js';
-import { passkeySupported, passkeysEnabled, roleHome } from '../lib/auth.js';
+import { passkeySupported, passkeysEnabled, roleHome, saveToPasswordManager, lastLoginId, isInternalEmail } from '../lib/auth.js';
 import { fmtDate } from '../lib/format.js';
 import { useLang, useT, useErrorText } from '../lib/i18n.jsx';
 import { Field, Spinner, ToastProvider, PasswordInput, FingerprintIcon } from './ui.jsx';
@@ -101,7 +101,11 @@ export function Portal({ role, title, accent, tabs, children }) {
 export function ChangePassword() {
   const t = useT();
   const errText = useErrorText();
-  const { client } = usePortal();
+  const { client, session, profile } = usePortal();
+  // Which saved login to update in the password manager: what this device logged in with,
+  // else the account's own email or username.
+  const email = session?.user?.email || '';
+  const loginId = lastLoginId() || (email && !isInternalEmail(email) ? email : profile?.username || email);
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
   const [msg, setMsg] = useState(null);
@@ -111,13 +115,15 @@ export function ChangePassword() {
     if (pw !== pw2) return setMsg({ err: t('Kata laluan tidak sepadan.', 'Passwords do not match.') });
     const { error } = await client.auth.updateUser({ password: pw });
     setMsg(error ? { err: errText(error) } : { ok: t('Kata laluan dikemas kini.', 'Password updated.') });
-    if (!error) { setPw(''); setPw2(''); }
+    if (!error) { saveToPasswordManager(loginId, pw); setPw(''); setPw2(''); }
   }
   return (
     <form className="card" onSubmit={submit}>
       <h3>{t('Tukar kata laluan', 'Change password')}</h3>
       {msg?.err && <div className="alert alert-error">{msg.err}</div>}
       {msg?.ok && <div className="alert alert-ok">{msg.ok}</div>}
+      {/* Hidden username so Google Password Manager / iCloud Keychain update the right saved login. */}
+      <input type="text" name="username" autoComplete="username" value={loginId} readOnly hidden />
       <div className="grid-2">
         <Field label={t('Kata laluan baharu', 'New password')}><PasswordInput {...eye} minLength={6} value={pw} onChange={(e) => setPw(e.target.value)} required autoComplete="new-password" /></Field>
         <Field label={t('Sahkan kata laluan', 'Confirm password')}><PasswordInput {...eye} minLength={6} value={pw2} onChange={(e) => setPw2(e.target.value)} required autoComplete="new-password" /></Field>

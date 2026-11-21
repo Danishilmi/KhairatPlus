@@ -24,6 +24,26 @@ export async function signIn(client, identifier, password) {
   if (e2) throw e2;
 }
 
+// Phone / browser password managers (Google Password Manager on Android and Chrome,
+// iCloud Keychain on iPhone, iPad and Mac). Safari and most browsers offer to save by
+// themselves when the login form is submitted with autocomplete="username" /
+// "current-password" fields. Chrome and Android also take an explicit request through the
+// Credential Management API, which makes the "Save password?" prompt reliable in a
+// single-page app. Never throws: saving is a convenience, not part of logging in.
+export async function saveToPasswordManager(id, password) {
+  rememberLoginId(id);
+  try {
+    if (typeof window === 'undefined' || !window.PasswordCredential || !navigator.credentials?.store) return;
+    await navigator.credentials.store(new window.PasswordCredential({ id, password, name: id }));
+  } catch { /* user dismissed it, or the browser does not allow it here */ }
+}
+
+// The email / Member ID / username this device last logged in with, so the change-password
+// form can tell the password manager which saved entry to update.
+const LAST_ID_KEY = 'khairatplus-last-login';
+export function rememberLoginId(id) { try { if (id) localStorage.setItem(LAST_ID_KEY, id); } catch { /* storage blocked */ } }
+export function lastLoginId() { try { return localStorage.getItem(LAST_ID_KEY) || ''; } catch { return ''; } }
+
 // Asks Supabase Auth whether passkeys are turned on (Authentication → Passkeys on the
 // hosted project, [auth.passkey] in supabase/config.toml locally). Cached per page load.
 // Resolves true when the answer is unknown, so a network hiccup never hides the option.
